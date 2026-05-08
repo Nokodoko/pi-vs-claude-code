@@ -1,0 +1,60 @@
+ [38;2;194;250;242m📡 coms ready · planner@default · default pool[39m
+[38;2;255;209;102m[Skill conflicts][39m
+[38;2;255;209;102m  auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/skills/bowser.md[39m
+[38;2;255;209;102m    name "bowser" does not match parent directory "skills"[39m
+
+[38;2;255;209;102m[Extension issues][39m
+[38;2;255;209;102m  path (temp) ~/Documents/projects/experimental/pi-vs-cc/extensions/theme-cycler.ts[39m
+[38;2;255;209;102m    Extension shortcut conflict: 'ctrl+x' is built-in shortcut for app.models.clearAll and /Users/indydevdan/Documents/projects/experimental/pi-vs-cc/extensions/theme-cycler.ts. Using
+/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/extensions/theme-cycler.ts.[39m
+
+[38;2;255;209;102m[Theme conflicts][39m
+[38;2;255;209;102m  "catppuccin-mocha" collision:[39m
+[38;2;194;250;242m    [38;2;46;234;181m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/catppuccin-mocha.json
+[38;2;194;250;242m    [38;2;255;209;102m✗[39m ~/.pi/agent/themes/catppuccin-mocha.json (skipped)
+[38;2;255;209;102m  "cyberpunk" collision:[39m
+[38;2;194;250;242m    [38;2;46;234;181m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/cyberpunk.json
+[38;2;194;250;242m    [38;2;255;209;102m✗[39m ~/.pi/agent/themes/cyberpunk.json (skipped)
+[38;2;255;209;102m  "dracula" collision:[39m
+[38;2;194;250;242m    [38;2;46;234;181m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/dracula.json
+[38;2;194;250;242m    [38;2;255;209;102m✗[39m ~/.pi/agent/themes/dracula.json (skipped)
+[38;2;255;209;102m  "everforest" collision:[39m
+[38;2;194;250;242m    [38;2;46;234;181m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/everforest.json
+[38;2;194;250;242m    [38;2;255;209;102m✗[39m ~/.pi/agent/themes/everforest.json (skipped)
+[38;2;255;209;102m  "gruvbox" collision:[39m
+[38;2;194;250;242m    [38;2;46;234;181m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/gruvbox.json
+[38;2;194;250;242m    [38;2;255;209;102m✗[39m ~/.pi/agent/themes/gruvbox.json (skipped)
+[38;2;255;209;102m  "midnight-ocean" collision:[39m
+[38;2;194;250;242m    [38;2;46;234;181m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/midnight-ocean.json
+[38;2;194;250;242m    [38;2;255;209;102m✗[39m ~/.pi/agent/themes/midnight-ocean.json (skipped)
+[38;2;255;209;102m  "nord" collision:[39m
+[38;2;194;250;242m    [38;2;46;234;181m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/nord.json
+[38;2;194;250;242m    [38;2;255;209;102m✗[39m ~/.pi/agent/themes/nord.json (skipped)
+[38;2;255;209;102m  "ocean-breeze" collision:[39m
+[38;2;194;250;242m    [38;2;46;234;181m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/ocean-breeze.json
+[38;2;194;250;242m    [38;2;255;209;102m✗[39m ~/.pi/agent/themes/ocean-breeze.json (skipped)
+[38;2;255;209;102m  "rose-pine" collision:[39m
+[38;2;194;250;242m    [38;2;46;234;181m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/rose-pine.json
+[38;2;194;250;242m    [38;2;255;209;102m✗[39m ~/.pi/agent/themes/rose-pine.json (skipped)
+[38;2;255;209;102m  "synthwave" collision:[39m
+[38;2;194;250;242m    [38;2;46;234;181m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/synthwave.json
+[38;2;194;250;242m    [38;2;255;209;102m✗[39m ~/.pi/agent/themes/synthwave.json (skipped)
+[38;2;255;209;102m  "tokyo-night" collision:[39m
+[38;2;194;250;242m    [38;2;46;234;181m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/tokyo-night.json
+[38;2;194;250;242m    [38;2;255;209;102m✗[39m ~/.pi/agent/themes/tokyo-night.json (skipped)
+
+
+[38;2;255;209;102m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[39m [1m[38;2;255;209;102mUpdate Available[0m
+ [38;2;194;250;242mNew version 0.73.1 is available. Run [38;2;51;255;247mpi update[39m
+ [38;2;194;250;242mChangelog: [38;2;51;255;247mhttps://github.com/badlogic/pi-mono/blob/main/packages/coding-agent/CHANGELOG.md[39m
+[38;2;255;209;102m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+[38;2;51;255;247m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[7m[39m [0m
+[38;2;51;255;247m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[38;2;194;250;242m┏━[38;2;80;176;224m coms [38;2;194;250;242m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ [38;2;54;249;246mplanner[38;2;194;250;242m ━┓[39m
+ [38;2;255;126;219m●[39m [38;2;51;255;247mcoder       [39m [38;2;194;250;242mhaiku-4-5     [39m [38;2;255;209;102m[[38;2;194;250;242m---------------[38;2;255;209;102m][39m [38;2;51;255;247m  0%[38;2;194;250;242m  —  Writes and edits code[39m
+ [38;2;254;222;93m●[39m [38;2;51;255;247mplanner2    [39m [38;2;194;250;242mhaiku-4-5     [39m [38;2;255;209;102m[[38;2;194;250;242m---------------[38;2;255;209;102m][39m [38;2;51;255;247m  0%[38;2;194;250;242m  —  [39m
+[38;2;194;250;242m┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+ claude-haiku-4-5[39m                                                                                                                                                                       [38;2;194;250;242m[----------] 0%

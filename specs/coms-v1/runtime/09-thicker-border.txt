@@ -1,0 +1,60 @@
+PI_COMS_DIR=/tmp/.pi-coms-trim pi -e extensions/coms.ts -e extensions/minimal.ts --name trimtest --color "#FF7EDB"
+IndyDevDan: pi-vs-cc % PI_COMS_DIR=/tmp/.pi-coms-trim pi -e extensions/coms.ts -e extensions/minimal.ts --name trimtest --color "#FF7EDB"
+
+ [38;2;254;222;93m📡 coms ready · trimtest@default · default pool[39m
+[38;2;255;139;57m[Skill conflicts][39m
+[38;2;255;139;57m  auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/skills/bowser.md[39m
+[38;2;255;139;57m    name "bowser" does not match parent directory "skills"[39m
+
+[38;2;255;139;57m[Theme conflicts][39m
+[38;2;255;139;57m  "catppuccin-mocha" collision:[39m
+[38;2;254;222;93m    [38;2;114;241;184m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/catppuccin-mocha.json
+[38;2;254;222;93m    [38;2;255;139;57m✗[39m ~/.pi/agent/themes/catppuccin-mocha.json (skipped)
+[38;2;255;139;57m  "cyberpunk" collision:[39m
+[38;2;254;222;93m    [38;2;114;241;184m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/cyberpunk.json
+[38;2;254;222;93m    [38;2;255;139;57m✗[39m ~/.pi/agent/themes/cyberpunk.json (skipped)
+[38;2;255;139;57m  "dracula" collision:[39m
+[38;2;254;222;93m    [38;2;114;241;184m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/dracula.json
+[38;2;254;222;93m    [38;2;255;139;57m✗[39m ~/.pi/agent/themes/dracula.json (skipped)
+[38;2;255;139;57m  "everforest" collision:[39m
+[38;2;254;222;93m    [38;2;114;241;184m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/everforest.json
+[38;2;254;222;93m    [38;2;255;139;57m✗[39m ~/.pi/agent/themes/everforest.json (skipped)
+[38;2;255;139;57m  "gruvbox" collision:[39m
+[38;2;254;222;93m    [38;2;114;241;184m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/gruvbox.json
+[38;2;254;222;93m    [38;2;255;139;57m✗[39m ~/.pi/agent/themes/gruvbox.json (skipped)
+[38;2;255;139;57m  "midnight-ocean" collision:[39m
+[38;2;254;222;93m    [38;2;114;241;184m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/midnight-ocean.json
+[38;2;254;222;93m    [38;2;255;139;57m✗[39m ~/.pi/agent/themes/midnight-ocean.json (skipped)
+[38;2;255;139;57m  "nord" collision:[39m
+[38;2;254;222;93m    [38;2;114;241;184m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/nord.json
+[38;2;254;222;93m    [38;2;255;139;57m✗[39m ~/.pi/agent/themes/nord.json (skipped)
+[38;2;255;139;57m  "ocean-breeze" collision:[39m
+[38;2;254;222;93m    [38;2;114;241;184m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/ocean-breeze.json
+[38;2;254;222;93m    [38;2;255;139;57m✗[39m ~/.pi/agent/themes/ocean-breeze.json (skipped)
+[38;2;255;139;57m  "rose-pine" collision:[39m
+[38;2;254;222;93m    [38;2;114;241;184m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/rose-pine.json
+[38;2;254;222;93m    [38;2;255;139;57m✗[39m ~/.pi/agent/themes/rose-pine.json (skipped)
+[38;2;255;139;57m  "synthwave" collision:[39m
+[38;2;254;222;93m    [38;2;114;241;184m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/synthwave.json
+[38;2;254;222;93m    [38;2;255;139;57m✗[39m ~/.pi/agent/themes/synthwave.json (skipped)
+[38;2;255;139;57m  "tokyo-night" collision:[39m
+[38;2;254;222;93m    [38;2;114;241;184m✓[39m auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/tokyo-night.json
+[38;2;254;222;93m    [38;2;255;139;57m✗[39m ~/.pi/agent/themes/tokyo-night.json (skipped)
+
+
+[38;2;54;249;246m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[7m[39m [0m
+[38;2;54;249;246m────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+[38;2;52;41;79m┏━[38;2;255;126;219m coms [38;2;52;41;79m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+[38;2;254;222;93m no peers connected[39m
+[38;2;52;41;79m┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+[38;2;254;222;93m claude-haiku-4-5[39m                                                                                                                                                                       [38;2;254;222;93m[----------] 0%
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,309 @@
+[
+  {
+    "slug": "hero",
+    "section": "Whole plan",
+    "filename": "00-hero.png",
+    "labels": [
+      "Pi agents",
+      "HTTP hub",
+      "SSE stream",
+      "LAN",
+      "Remote URL",
+      "Auth",
+      "Messages",
+      "Pool widget"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: A high-level one-shot architecture map: multiple Pi agent terminals around a central Bun HTTP/SSE hub, arrows for HTTP JSON requests toward the hub and SSE event streams back out, with LAN and remote cloud boundary shown as two network zones.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"Pi agents\", \"HTTP hub\", \"SSE stream\", \"LAN\", \"Remote URL\", \"Auth\", \"Messages\", \"Pool widget\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/00-hero.png"
+  },
+  {
+    "slug": "purpose",
+    "section": "1. Purpose",
+    "filename": "01-purpose.png",
+    "labels": [
+      "Old coms",
+      "Unix sockets",
+      "Bun hub",
+      "HTTP JSON",
+      "SSE events",
+      "LAN",
+      "Remote",
+      "Anywhere"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Before/after transformation diagram: left side local socket mesh, center migration arrow, right side central Bun hub connecting agents across LAN and remote URL.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"Old coms\", \"Unix sockets\", \"Bun hub\", \"HTTP JSON\", \"SSE events\", \"LAN\", \"Remote\", \"Anywhere\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/01-purpose.png"
+  },
+  {
+    "slug": "design-goals",
+    "section": "2. Design goals",
+    "filename": "02-design-goals.png",
+    "labels": [
+      "Server hub",
+      "Local first",
+      "LAN ready",
+      "Remote URL",
+      "SSE push",
+      "HTTP JSON",
+      "Auth",
+      "Simple Bun"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Radial design-principles map with central coms-net node and eight goal spokes grouped by transport, reach, safety, and simplicity.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"Server hub\", \"Local first\", \"LAN ready\", \"Remote URL\", \"SSE push\", \"HTTP JSON\", \"Auth\", \"Simple Bun\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/02-design-goals.png"
+  },
+  {
+    "slug": "deployment-modes",
+    "section": "5. Deployment modes",
+    "filename": "03-deployment-modes.png",
+    "labels": [
+      "Auto local",
+      "Manual local",
+      "LAN mode",
+      "Remote HTTPS",
+      "Server URL",
+      "Auth token",
+      "Agents",
+      "Hub"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Four-panel deployment topology showing the same agents connecting to hub in local auto, local manual, LAN, and remote HTTPS configurations.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"Auto local\", \"Manual local\", \"LAN mode\", \"Remote HTTPS\", \"Server URL\", \"Auth token\", \"Agents\", \"Hub\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/03-deployment-modes.png"
+  },
+  {
+    "slug": "port-claiming",
+    "section": "6. Local port claiming and server discovery",
+    "filename": "04-port-claiming.png",
+    "labels": [
+      "Start server",
+      "Bun serve",
+      "Port 0",
+      "Open port",
+      "Print URL",
+      "server.json",
+      "Agents connect",
+      "No lock"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Show simplified local port claiming for coms-net: the user starts one explicit Bun server process, Bun/OS claims an open port using port 0, the server prints and records the URL, then Pi agents connect to it. Emphasize that there is no lock directory, no hidden auto-spawn, and no port scanning.\nComposition: left-to-right lifecycle flow with four main stages: explicit start, atomic bind, URL discovery, agent connection. Put a small crossed-out side badge for lock/auto-spawn complexity.\nVisual elements: terminal command block, Bun server box, port badge, server registry card, arrows to multiple Pi agent terminals, clean status check marks.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for successful port claim, yellow #FEDE5D for caution/no-lock badge.\nExact text labels, complete set, no other words: \"Start server\", \"Bun serve\", \"Port 0\", \"Open port\", \"Print URL\", \"server.json\", \"Agents connect\", \"No lock\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/04-port-claiming.png"
+  },
+  {
+    "slug": "protocol-choice",
+    "section": "7. Protocol choice",
+    "filename": "05-protocol-choice.png",
+    "labels": [
+      "HTTP JSON",
+      "SSE",
+      "Register",
+      "Send",
+      "Await",
+      "Prompt event",
+      "Response event",
+      "Reconnect"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Protocol split diagram with client-to-server HTTP JSON lane and server-to-agent SSE lane, showing request endpoints and pushed event types.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"HTTP JSON\", \"SSE\", \"Register\", \"Send\", \"Await\", \"Prompt event\", \"Response event\", \"Reconnect\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/05-protocol-choice.png"
+  },
+  {
+    "slug": "agent-identity",
+    "section": "8. Agent identity",
+    "filename": "06-agent-identity.png",
+    "labels": [
+      "CLI flags",
+      "Frontmatter",
+      "Defaults",
+      "session_id",
+      "Name",
+      "Project",
+      "Color",
+      "Status"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Identity resolution stack feeding an AgentCard object, with session_id as authoritative key and name as human alias.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"CLI flags\", \"Frontmatter\", \"Defaults\", \"session_id\", \"Name\", \"Project\", \"Color\", \"Status\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/06-agent-identity.png"
+  },
+  {
+    "slug": "http-api",
+    "section": "9. HTTP API",
+    "filename": "07-http-api.png",
+    "labels": [
+      "/health",
+      "/register",
+      "/events",
+      "/heartbeat",
+      "/agents",
+      "/messages",
+      "/await",
+      "/response",
+      "DELETE"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Endpoint surface map arranged by lifecycle: health, registration, stream, heartbeat, listing, messaging, awaiting, response, unregister.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"/health\", \"/register\", \"/events\", \"/heartbeat\", \"/agents\", \"/messages\", \"/await\", \"/response\", \"DELETE\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/07-http-api.png"
+  },
+  {
+    "slug": "message-model",
+    "section": "10. Message model",
+    "filename": "08-message-model.png",
+    "labels": [
+      "Message",
+      "Sender",
+      "Target",
+      "Prompt",
+      "Status",
+      "Response",
+      "TTL",
+      "Hops"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Data model card diagram for ComsMessage showing identity fields, payload fields, status lifecycle, expiry, and hop protection.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"Message\", \"Sender\", \"Target\", \"Prompt\", \"Status\", \"Response\", \"TTL\", \"Hops\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/08-message-model.png"
+  },
+  {
+    "slug": "sse-payloads",
+    "section": "11. SSE payloads",
+    "filename": "09-sse-payloads.png",
+    "labels": [
+      "Snapshot",
+      "Joined",
+      "Updated",
+      "Left",
+      "Prompt",
+      "Response",
+      "Status",
+      "Ping"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: SSE event taxonomy fan-out from server stream to agents, grouped into pool events, message events, and keepalive events.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"Snapshot\", \"Joined\", \"Updated\", \"Left\", \"Prompt\", \"Response\", \"Status\", \"Ping\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/09-sse-payloads.png"
+  },
+  {
+    "slug": "client-lifecycle",
+    "section": "12. Pi extension client lifecycle",
+    "filename": "10-client-lifecycle.png",
+    "labels": [
+      "session_start",
+      "Register",
+      "Open SSE",
+      "Heartbeat",
+      "Prompt follow-up",
+      "agent_end",
+      "Post response",
+      "Shutdown"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Client lifecycle timeline from Pi session_start through registration, SSE loop, prompt injection, response capture, and unregister shutdown.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"session_start\", \"Register\", \"Open SSE\", \"Heartbeat\", \"Prompt follow-up\", \"agent_end\", \"Post response\", \"Shutdown\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/10-client-lifecycle.png"
+  },
+  {
+    "slug": "tool-surface",
+    "section": "13. Preserved tool surface",
+    "filename": "11-tool-surface.png",
+    "labels": [
+      "coms_list",
+      "coms_send",
+      "coms_get",
+      "coms_await",
+      "/coms",
+      "HTTP API",
+      "SSE cache",
+      "Agent tools"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Tool mapping diagram: Pi tools on left mapped to HTTP endpoints and SSE cache on right, showing same user-facing capability preserved.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"coms_list\", \"coms_send\", \"coms_get\", \"coms_await\", \"/coms\", \"HTTP API\", \"SSE cache\", \"Agent tools\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/11-tool-surface.png"
+  },
+  {
+    "slug": "pool-widget",
+    "section": "14. Pool widget behavior",
+    "filename": "12-pool-widget.png",
+    "labels": [
+      "Pool widget",
+      "Agent row",
+      "Color dot",
+      "Context bar",
+      "Online",
+      "Stale",
+      "Project",
+      "Server URL"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Terminal UI mockup of stacked below-editor pool widget with rows, colored dots, context bars, online/stale status, and server URL header.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"Pool widget\", \"Agent row\", \"Color dot\", \"Context bar\", \"Online\", \"Stale\", \"Project\", \"Server URL\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/12-pool-widget.png"
+  },
+  {
+    "slug": "server-internals",
+    "section": "15. Server internals",
+    "filename": "13-server-internals.png",
+    "labels": [
+      "ServerState",
+      "Projects",
+      "Agents",
+      "Streams",
+      "Messages",
+      "Awaiters",
+      "Stale scan",
+      "TTL cleanup"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Internal state architecture diagram of Bun hub maps and cleanup loops: projects contain agents, streams, messages, awaiters.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"ServerState\", \"Projects\", \"Agents\", \"Streams\", \"Messages\", \"Awaiters\", \"Stale scan\", \"TTL cleanup\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/13-server-internals.png"
+  },
+  {
+    "slug": "security-model",
+    "section": "16. Security model",
+    "filename": "14-security-model.png",
+    "labels": [
+      "Bearer token",
+      "127.0.0.1",
+      "LAN bind",
+      "HTTPS",
+      "No CORS",
+      "Prompt origin",
+      "Audit log",
+      "Trust boundary"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Security boundary diagram showing auth gate around server, safe local default, explicit LAN/remote exposure, prompt trust boundary, and audit logging.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"Bearer token\", \"127.0.0.1\", \"LAN bind\", \"HTTPS\", \"No CORS\", \"Prompt origin\", \"Audit log\", \"Trust boundary\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/14-security-model.png"
+  },
+  {
+    "slug": "differences",
+    "section": "17. Differences from socket coms v1",
+    "filename": "15-differences.png",
+    "labels": [
+      "Socket coms",
+      "Registry files",
+      "HTTP hub",
+      "SSE joins",
+      "Remote support",
+      "Heartbeat",
+      "Server routing",
+      "Same tools"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Side-by-side migration matrix visual contrasting old socket peer-to-peer with new central HTTP/SSE hub while preserving tools.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"Socket coms\", \"Registry files\", \"HTTP hub\", \"SSE joins\", \"Remote support\", \"Heartbeat\", \"Server routing\", \"Same tools\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/15-differences.png"
+  },
+  {
+    "slug": "implementation-plan",
+    "section": "18. Implementation plan",
+    "filename": "16-implementation-plan.png",
+    "labels": [
+      "Protocol",
+      "Server",
+      "Client",
+      "Tests",
+      "Docs",
+      "Bun hub",
+      "Pi extension",
+      "Release"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Five-phase roadmap timeline from protocol finalization to Bun server, Pi client, testing, and documentation.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"Protocol\", \"Server\", \"Client\", \"Tests\", \"Docs\", \"Bun hub\", \"Pi extension\", \"Release\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/16-implementation-plan.png"
+  },
+  {
+    "slug": "acceptance",
+    "section": "19. Acceptance criteria for finished future implementation",
+    "filename": "17-acceptance.png",
+    "labels": [
+      "Port binds",
+      "Auth works",
+      "SSE joins",
+      "Tools work",
+      "Responses return",
+      "No sockets",
+      "LAN pass",
+      "Remote pass"
+    ],
+    "prompt": "Create a 16:9 dense information-rich diagram for a technical plan/spec.\nVisual register: clean vector technical architecture diagram, dark navy documentation aesthetic, crisp thin lines, high contrast cyan pink green yellow accents, dense but readable, no decorative filler.\nPurpose: Acceptance dashboard with check tiles for server, security, SSE, tools, response routing, transport replacement, LAN, and remote validation.\nComposition: structured technical diagram with strong hierarchy, meaningful arrows, labeled nodes, balanced whitespace, and no decorative illustration.\nVisual elements: architecture boxes, protocol arrows, state badges, data cards, network boundaries, and minimal abstract glyphs where useful.\nColor system: dark navy #07111F background, off-white #F8FAFC lines/text, cyan #36F9F6 for transport, pink #FF7EDB for agents, green #72F1B8 for success/live, yellow #FEDE5D for warnings/security.\nExact text labels, complete set, no other words: \"Port binds\", \"Auth works\", \"SSE joins\", \"Tools work\", \"Responses return\", \"No sockets\", \"LAN pass\", \"Remote pass\".\nText rules: no extra text, no paragraphs, no captions, no lorem ipsum, maximum 10 labels total.\nOutput role: technical spec illustration embedded in markdown.",
+    "path": "/Users/indydevdan/Documents/projects/experimental/pi-vs-cc/specs/coms-net-v1/17-acceptance.png"
+  }
+]

@@ -3,6 +3,16 @@ set dotenv-load := true
 default:
     @just --list
 
+# prime
+
+# Launch Claude Code and run /prime
+primecc:
+    claude --dangerously-skip-permissions --model "opus[1m]" "/prime"
+
+# Launch Pi and run /prime
+primepi:
+    pi "/prime"
+
 # g1
 
 # 1. default pi
@@ -64,6 +74,50 @@ ext-agent-chain:
 # 14. Pi Pi: meta-agent that builds Pi agents with parallel expert research
 ext-pi-pi:
     pi -e extensions/pi-pi.ts -e extensions/theme-cycler.ts
+
+# 17. Coms: peer-to-peer messaging between Pi agents on the same machine
+ext-coms:
+    pi -e extensions/coms.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts
+
+# coms demo
+
+# Coms — planner agent (cyan)
+ext-coms-planner:
+    pi -e extensions/coms.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --name planner --purpose "Plans the work, audio-first" --color "#36F9F6"
+
+# Coms — coder agent (pink)
+ext-coms-coder:
+    pi -e extensions/coms.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --name coder --purpose "Writes and edits code" --color "#FF7EDB"
+
+# Coms — open planner + coder in two terminals
+ext-coms-pair:
+    #!/usr/bin/env bash
+    osascript -e "tell application \"Terminal\" to do script \"cd '{{justfile_directory()}}' && just ext-coms-planner\""
+    osascript -e "tell application \"Terminal\" to do script \"cd '{{justfile_directory()}}' && just ext-coms-coder\""
+
+# Coms — spawn 4 coders in parallel terminals
+ext-coms-team-4:
+    #!/usr/bin/env bash
+    declare -a names=("coder-1" "coder-2" "coder-3" "coder-4")
+    declare -a colors=("#72F1B8" "#36F9F6" "#FF7EDB" "#FEDE5D")
+
+    for i in {0..3}; do
+        osascript -e "tell application \"Terminal\" to do script \"cd '{{justfile_directory()}}' && source .env && pi -e extensions/coms.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --name '${names[$i]}' --purpose 'Writes and edits code' --color '${colors[$i]}'\""
+    done
+
+# coms-net (HTTP/SSE hub)
+
+# Start a local coms-net server (binds 127.0.0.1, OS-claimed port)
+coms-net-server:
+    bun scripts/coms-net-server.ts
+
+# Start a LAN-visible coms-net server (binds 0.0.0.0, requires PI_COMS_NET_AUTH_TOKEN)
+coms-net-server-lan:
+    PI_COMS_NET_HOST=0.0.0.0 bun scripts/coms-net-server.ts
+
+# Pi with networked coms client (auto-discovers local server.json)
+ext-coms-net:
+    pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts
 
 #ext
 

@@ -1,0 +1,60 @@
+PI_COMS_DIR=/tmp/.pi-coms-border-test pi -e extensions/coms.ts -e extensions/minimal.ts --append-system-prompt /tmp/coms-border-test.md
+IndyDevDan: pi-vs-cc % PI_COMS_DIR=/tmp/.pi-coms-border-test pi -e extensions/coms.ts -e extensions/minimal.ts --append-system-prompt /tmp/coms-border-test.md
+
+ 📡 coms ready · border-test@default · default pool
+[Skill conflicts]
+  auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/skills/bowser.md
+    name "bowser" does not match parent directory "skills"
+
+[Theme conflicts]
+  "catppuccin-mocha" collision:
+    ✓ auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/catppuccin-mocha.json
+    ✗ ~/.pi/agent/themes/catppuccin-mocha.json (skipped)
+  "cyberpunk" collision:
+    ✓ auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/cyberpunk.json
+    ✗ ~/.pi/agent/themes/cyberpunk.json (skipped)
+  "dracula" collision:
+    ✓ auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/dracula.json
+    ✗ ~/.pi/agent/themes/dracula.json (skipped)
+  "everforest" collision:
+    ✓ auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/everforest.json
+    ✗ ~/.pi/agent/themes/everforest.json (skipped)
+  "gruvbox" collision:
+    ✓ auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/gruvbox.json
+    ✗ ~/.pi/agent/themes/gruvbox.json (skipped)
+  "midnight-ocean" collision:
+    ✓ auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/midnight-ocean.json
+    ✗ ~/.pi/agent/themes/midnight-ocean.json (skipped)
+  "nord" collision:
+    ✓ auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/nord.json
+    ✗ ~/.pi/agent/themes/nord.json (skipped)
+  "ocean-breeze" collision:
+    ✓ auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/ocean-breeze.json
+    ✗ ~/.pi/agent/themes/ocean-breeze.json (skipped)
+  "rose-pine" collision:
+    ✓ auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/rose-pine.json
+    ✗ ~/.pi/agent/themes/rose-pine.json (skipped)
+  "synthwave" collision:
+    ✓ auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/synthwave.json
+    ✗ ~/.pi/agent/themes/synthwave.json (skipped)
+  "tokyo-night" collision:
+    ✓ auto (project) ~/Documents/projects/experimental/pi-vs-cc/.pi/themes/tokyo-night.json
+    ✗ ~/.pi/agent/themes/tokyo-night.json (skipped)
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+┌─ coms ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+coms · no peers connected
+└──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+ gpt-5.5                                                                                                                                                                                [----------] 0%
+
+
+
+
+
+
+
+
+
