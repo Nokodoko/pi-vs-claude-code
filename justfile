@@ -76,18 +76,19 @@ ext-pi-pi:
     pi -e extensions/pi-pi.ts -e extensions/theme-cycler.ts
 
 # 17. Coms: peer-to-peer messaging between Pi agents on the same machine
-ext-coms:
-    pi -e extensions/coms.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts
+# Pass any pi/extension flags through, e.g.: just ext-coms --name dev --color "#72F1B8"
+ext-coms *args:
+    pi -e extensions/coms.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts {{args}}
 
 # coms demo
 
-# Coms — planner agent (cyan)
-ext-coms-planner:
-    pi -e extensions/coms.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --name planner --purpose "Plans the work, audio-first" --color "#36F9F6"
+# Coms — planner agent (cyan). Extra args append, e.g.: just ext-coms-planner --explicit
+ext-coms-planner *args:
+    pi -e extensions/coms.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --name planner --purpose "Plans the work, audio-first" --color "#36F9F6" {{args}}
 
-# Coms — coder agent (pink)
-ext-coms-coder:
-    pi -e extensions/coms.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --name coder --purpose "Writes and edits code" --color "#FF7EDB"
+# Coms — coder agent (pink). Extra args append.
+ext-coms-coder *args:
+    pi -e extensions/coms.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --name coder --purpose "Writes and edits code" --color "#FF7EDB" {{args}}
 
 # Coms — open planner + coder in two terminals
 ext-coms-pair:
@@ -116,8 +117,9 @@ coms-net-server-lan:
     PI_COMS_NET_HOST=0.0.0.0 bun scripts/coms-net-server.ts
 
 # Pi with networked coms client (auto-discovers local server.json)
-ext-coms-net:
-    pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts
+# Pass any flags through, e.g.: just ext-coms-net --name dev --server-url http://… --auth-token …
+ext-coms-net *args:
+    pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts {{args}}
 
 # Alias: just coms = just ext-coms-net
 alias coms := ext-coms-net
