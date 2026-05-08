@@ -119,6 +119,9 @@ coms-net-server-lan:
 ext-coms-net:
     pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts
 
+# Alias: just coms = just ext-coms-net
+alias coms := ext-coms-net
+
 #ext
 
 # 15. Session Replay: scrollable timeline overlay of session history (legit)
