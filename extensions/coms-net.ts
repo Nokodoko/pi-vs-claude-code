@@ -969,14 +969,11 @@ export default function (pi: ExtensionAPI) {
 			});
 		} catch { /* best-effort */ }
 
-		// 7. Install widget + status.
+		// 7. Install widget + status. Success is the default — only failures notify
+		// (status line + widget already convey the connected state).
 		try {
 			ctx.ui.setStatus("coms-net", `📡 ${identity.name}@${identity.project}`);
 			installPoolWidget(ctx);
-			ctx.ui.notify(
-				`📡 coms-net ready · ${identity.name}@${identity.project} · ${serverUrl}`,
-				"info",
-			);
 		} catch {
 			// hasUI may be false in some contexts.
 		}
