@@ -121,6 +121,22 @@ coms-net-server-lan:
 ext-coms-net *args:
     pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts {{args}}
 
+# coms-net with gpt-5.5 (extra args still pass through, e.g. --name dev)
+coms1 *args:
+    pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --provider openai --model gpt-5.5 {{args}}
+
+# coms-net with claude-opus-4-7
+coms2 *args:
+    pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model claude-opus-4-7 {{args}}
+
+# coms-net with deepseek/deepseek-v4-pro
+coms3 *args:
+    pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model deepseek/deepseek-v4-pro {{args}}
+
+# coms-net with z-ai/glm-5.1
+coms4 *args:
+    pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model z-ai/glm-5.1 {{args}}
+
 # Alias: just coms = just ext-coms-net
 alias coms := ext-coms-net
 
