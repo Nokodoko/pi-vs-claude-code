@@ -40,8 +40,8 @@ func (c *Client) dispatchTool(req ipc.Request, w *ipc.Writer) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 type listParams struct {
-	Project        string `json:"project"`
-	IncludeExplicit bool  `json:"include_explicit"`
+	Project         string `json:"project"`
+	IncludeExplicit bool   `json:"include_explicit"`
 }
 
 func (c *Client) toolList(req ipc.Request, w *ipc.Writer) {

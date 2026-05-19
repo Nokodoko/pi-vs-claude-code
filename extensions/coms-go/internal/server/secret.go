@@ -6,7 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
+
+	"github.com/pi-vs-cc/coms-go/internal/util"
 )
 
 // generateToken returns 32 random bytes encoded as hex, matching the TS
@@ -19,35 +20,14 @@ func generateToken() (string, error) {
 	return hex.EncodeToString(buf), nil
 }
 
-// atomicWrite writes content to path using a temp-then-rename pattern, matching
-// the TS atomicWriteSync() function. If mode != 0, chmod is applied to the temp
-// file before the rename.
-func atomicWrite(path string, content []byte, mode os.FileMode) error {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("mkdir %s: %w", dir, err)
-	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, content, 0644); err != nil {
-		return fmt.Errorf("write tmp: %w", err)
-	}
-	if mode != 0 {
-		_ = os.Chmod(tmp, mode) // best-effort, matching TS
-	}
-	if err := os.Rename(tmp, path); err != nil {
-		_ = os.Remove(tmp)
-		return fmt.Errorf("rename to %s: %w", path, err)
-	}
-	return nil
-}
-
 // writeServerSecret writes {token: tok} to path with mode 0600.
+// Uses util.AtomicWrite (temp-then-rename) as the canonical implementation.
 func writeServerSecret(path, tok string) error {
 	data, err := json.MarshalIndent(map[string]string{"token": tok}, "", "  ")
 	if err != nil {
 		return err
 	}
-	if err := atomicWrite(path, data, 0600); err != nil {
+	if err := util.AtomicWrite(path, data, 0600); err != nil {
 		return err
 	}
 	// Belt-and-suspenders chmod, matching the TS server's post-rename chmod.

@@ -40,8 +40,8 @@ type Config struct {
 	AuthToken string // PI_COMS_NET_AUTH_TOKEN
 
 	// Tuning
-	MaxHops     int // PI_COMS_NET_MAX_HOPS; default 5
-	HeartbeatMs int // PI_COMS_NET_HEARTBEAT_MS; default 10_000
+	MaxHops      int // PI_COMS_NET_MAX_HOPS; default 5
+	HeartbeatMs  int // PI_COMS_NET_HEARTBEAT_MS; default 10_000
 	MessageTTLMs int // PI_COMS_NET_MESSAGE_TTL_MS; default 1_800_000
 
 	// Session supplied by shim
@@ -59,17 +59,17 @@ func DefaultConfig() Config {
 	return Config{
 		Name:         os.Getenv("PI_COMS_NAME"),
 		Purpose:      os.Getenv("PI_COMS_PURPOSE"),
-		Project:      envOr("PI_COMS_PROJECT", "default"),
+		Project:      util.EnvOr("PI_COMS_PROJECT", "default"),
 		Color:        os.Getenv("PI_COMS_COLOR"),
 		Explicit:     os.Getenv("PI_COMS_EXPLICIT") == "1",
 		ServerURL:    os.Getenv("PI_COMS_NET_SERVER_URL"),
 		AuthToken:    os.Getenv("PI_COMS_NET_AUTH_TOKEN"),
-		MaxHops:      envInt("PI_COMS_NET_MAX_HOPS", 5),
-		HeartbeatMs:  envInt("PI_COMS_NET_HEARTBEAT_MS", 10_000),
-		MessageTTLMs: envInt("PI_COMS_NET_MESSAGE_TTL_MS", 1_800_000),
+		MaxHops:      util.EnvInt("PI_COMS_NET_MAX_HOPS", 5),
+		HeartbeatMs:  util.EnvInt("PI_COMS_NET_HEARTBEAT_MS", 10_000),
+		MessageTTLMs: util.EnvInt("PI_COMS_NET_MESSAGE_TTL_MS", 1_800_000),
 		SessionID:    os.Getenv("PI_SESSION_ID"),
-		Cwd:          envOr("PI_CWD", mustGetwd()),
-		Model:        envOr("PI_MODEL", "unknown"),
+		Cwd:          util.EnvOr("PI_CWD", util.MustGetwd()),
+		Model:        util.EnvOr("PI_MODEL", "unknown"),
 		Stdin:        os.Stdin,
 		Stdout:       os.Stdout,
 	}
@@ -97,12 +97,12 @@ type netPendingResult struct {
 }
 
 type netPendingReply struct {
-	mu           sync.Mutex
-	result       *netPendingResult
-	ready        chan struct{}
-	targetName   string
+	mu            sync.Mutex
+	result        *netPendingResult
+	ready         chan struct{}
+	targetName    string
 	targetSession string
-	createdAt    string
+	createdAt     string
 }
 
 type netInboundCtx struct {
@@ -121,30 +121,30 @@ type netInboundCtx struct {
 
 // Client is the long-lived client-net process state.
 type Client struct {
-	cfg     Config
-	audit   *audit.Logger
-	hc      *http.Client
+	cfg   Config
+	audit *audit.Logger
+	hc    *http.Client
 
-	mu              sync.RWMutex
-	identity        *identity
-	serverURL       string
-	authToken       string
-	sseURLPath      string
-	peerCards       map[string]proto.AgentCard // session_id → card
-	pendingReplies  map[string]*netPendingReply
-	inboundQueue    map[string]*netInboundCtx
-	currentInbound  *netInboundCtx
-	shuttingDown    bool
+	mu             sync.RWMutex
+	identity       *identity
+	serverURL      string
+	authToken      string
+	sseURLPath     string
+	peerCards      map[string]proto.AgentCard // session_id → card
+	pendingReplies map[string]*netPendingReply
+	inboundQueue   map[string]*netInboundCtx
+	currentInbound *netInboundCtx
+	shuttingDown   bool
 
-	sseCancel  context.CancelFunc
+	sseCancel         context.CancelFunc
 	reconnectAttempts int
-	toolWg     sync.WaitGroup // tracks in-flight dispatchTool goroutines
+	toolWg            sync.WaitGroup // tracks in-flight dispatchTool goroutines
 }
 
 const (
-	reconnectBaseMs = 500
-	reconnectMaxMs  = 10_000
-	httpTimeoutMs   = 10_000
+	reconnectBaseMs  = 500
+	reconnectMaxMs   = 10_000
+	httpTimeoutMs    = 10_000
 	shutdownDeleteMs = 2_000
 )
 
@@ -294,7 +294,7 @@ func (c *Client) initIdentity() error {
 
 	cwd := cfg.Cwd
 	if cwd == "" {
-		cwd = mustGetwd()
+		cwd = util.MustGetwd()
 	}
 	model := cfg.Model
 	if model == "" {
@@ -433,11 +433,11 @@ func (c *Client) registerAgent(ctx context.Context) (string, error) {
 	// Server may suffix name on collision.
 	if regResp.Agent.Name != id.name {
 		_ = c.audit.Append(map[string]any{
-			"event":   "name_collision",
-			"desired": id.name,
+			"event":    "name_collision",
+			"desired":  id.name,
 			"assigned": regResp.Agent.Name,
-			"project": id.project,
-			"ts":      util.NowIso(),
+			"project":  id.project,
+			"ts":       util.NowIso(),
 		})
 		c.mu.Lock()
 		c.identity.name = regResp.Agent.Name
@@ -1191,36 +1191,4 @@ func urlEscape(s string) string {
 func isURLSafe(c byte) bool {
 	return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') ||
 		c == '-' || c == '_' || c == '.' || c == '~'
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Misc helpers (same as localclient/client.go to avoid cross-package import)
-// ─────────────────────────────────────────────────────────────────────────────
-
-func envOr(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
-}
-
-func envInt(key string, def int) int {
-	v := os.Getenv(key)
-	if v == "" {
-		return def
-	}
-	n := 0
-	fmt.Sscanf(v, "%d", &n)
-	if n <= 0 {
-		return def
-	}
-	return n
-}
-
-func mustGetwd() string {
-	d, err := os.Getwd()
-	if err != nil {
-		return "/tmp"
-	}
-	return d
 }

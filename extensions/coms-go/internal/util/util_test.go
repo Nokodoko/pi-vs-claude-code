@@ -83,9 +83,9 @@ func TestIsValidHex(t *testing.T) {
 		{"#000000", true},
 		{"#FFFFFF", true},
 		{"#abcdef", true},
-		{"36F9F6", false},   // missing #
-		{"#36F9F", false},   // 5 digits
-		{"#GG0000", false},  // invalid chars
+		{"36F9F6", false},  // missing #
+		{"#36F9F", false},  // 5 digits
+		{"#GG0000", false}, // invalid chars
 		{"", false},
 	}
 	for _, c := range cases {

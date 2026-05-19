@@ -93,15 +93,15 @@ func TestAgentCardJSONTags(t *testing.T) {
 		t.Fatal(err)
 	}
 	expected := map[string]string{
-		"session_id":       card.SessionID,
-		"name":             card.Name,
-		"purpose":          card.Purpose,
-		"model":            card.Model,
-		"color":            card.Color,
-		"cwd":              card.Cwd,
-		"project":          card.Project,
-		"started_at":       card.StartedAt,
-		"status":           string(card.Status),
+		"session_id": card.SessionID,
+		"name":       card.Name,
+		"purpose":    card.Purpose,
+		"model":      card.Model,
+		"color":      card.Color,
+		"cwd":        card.Cwd,
+		"project":    card.Project,
+		"started_at": card.StartedAt,
+		"status":     string(card.Status),
 	}
 	for k, v := range expected {
 		got, ok := m[k]
@@ -185,8 +185,8 @@ func TestComsMessageJSONTags(t *testing.T) {
 // TestErrorResponseShape verifies the universal error envelope shape.
 func TestErrorResponseShape(t *testing.T) {
 	er := proto.ErrorResponse{
-		Ok:    false,
-		Error: "target_not_found",
+		Ok:      false,
+		Error:   "target_not_found",
 		Details: map[string]string{"target": "ghost"},
 	}
 	data, err := json.Marshal(er)

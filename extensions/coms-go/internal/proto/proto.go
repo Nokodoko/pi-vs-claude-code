@@ -18,7 +18,7 @@ var Commit = "dev"
 
 // Envelope is the base wire type for all Unix-socket frames.
 type Envelope struct {
-	Type           string `json:"type"`            // "prompt" | "response" | "ping"
+	Type           string `json:"type"` // "prompt" | "response" | "ping"
 	MsgID          string `json:"msg_id"`
 	SenderSession  string `json:"sender_session"`
 	SenderEndpoint string `json:"sender_endpoint"`
@@ -50,15 +50,15 @@ type PingEnvelope struct {
 
 // AckMessage is the immediate ack/nack reply to a prompt or response envelope.
 type AckMessage struct {
-	Type  string `json:"type"`            // "ack" | "nack"
+	Type  string `json:"type"` // "ack" | "nack"
 	MsgID string `json:"msg_id"`
 	Error string `json:"error,omitempty"` // populated only on nack
 }
 
 // Pong is the reply to a PingEnvelope. It carries the local agent's card.
 type Pong struct {
-	Type      string        `json:"type"`       // "pong"
-	MsgID     string        `json:"msg_id"`
+	Type      string         `json:"type"` // "pong"
+	MsgID     string         `json:"msg_id"`
 	AgentCard AgentCardLocal `json:"agent_card"`
 }
 
@@ -189,10 +189,10 @@ type RegisterRequest struct {
 
 // RegisterResponse is the success body of POST /v1/agents/register.
 type RegisterResponse struct {
-	Ok                bool      `json:"ok"`
-	Agent             AgentCard `json:"agent"`
-	HeartbeatIntervalMs int     `json:"heartbeat_interval_ms"`
-	SseURL            string    `json:"sse_url"`
+	Ok                  bool      `json:"ok"`
+	Agent               AgentCard `json:"agent"`
+	HeartbeatIntervalMs int       `json:"heartbeat_interval_ms"`
+	SseURL              string    `json:"sse_url"`
 }
 
 // HeartbeatRequest is the body of POST /v1/agents/:sid/heartbeat.

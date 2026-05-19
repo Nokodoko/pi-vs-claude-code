@@ -24,12 +24,12 @@ type SseWriter struct {
 
 // ProjectState is the per-project in-memory state, guarded by mu.
 type ProjectState struct {
-	mu         sync.RWMutex
-	agents     map[string]*proto.NetRegistryEntry   // session_id → entry
-	nameIndex  map[string]map[string]struct{}        // name → set of session_ids
-	messages   map[string]*proto.ComsMessage         // msg_id → message
-	streams    map[string]*SseWriter                  // session_id → writer
-	awaiters   map[string]map[*Awaiter]struct{}       // msg_id → set of awaiters
+	mu        sync.RWMutex
+	agents    map[string]*proto.NetRegistryEntry // session_id → entry
+	nameIndex map[string]map[string]struct{}     // name → set of session_ids
+	messages  map[string]*proto.ComsMessage      // msg_id → message
+	streams   map[string]*SseWriter              // session_id → writer
+	awaiters  map[string]map[*Awaiter]struct{}   // msg_id → set of awaiters
 }
 
 func newProjectState() *ProjectState {

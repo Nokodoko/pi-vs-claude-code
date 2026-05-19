@@ -13,18 +13,19 @@ import (
 	"syscall"
 
 	"github.com/pi-vs-cc/coms-go/internal/proto"
+	"github.com/pi-vs-cc/coms-go/internal/util"
 )
 
 // Default tunables — match the TS server's module-scope constants.
 const (
-	defaultHost          = "127.0.0.1"
-	defaultPort          = 0
-	defaultProject       = "default"
-	defaultMaxHops       = 5
-	defaultMessageTTLMS  = 1_800_000
-	defaultMaxInbox      = 100
-	defaultHeartbeatMS   = 10_000
-	defaultStaleAfterMS  = 30_000
+	defaultHost           = "127.0.0.1"
+	defaultPort           = 0
+	defaultProject        = "default"
+	defaultMaxHops        = 5
+	defaultMessageTTLMS   = 1_800_000
+	defaultMaxInbox       = 100
+	defaultHeartbeatMS    = 10_000
+	defaultStaleAfterMS   = 30_000
 	defaultOfflineAfterMS = 60_000
 
 	staleScanIntervalMS = 5_000
@@ -49,37 +50,37 @@ func NewServeMux(cfg *Config) *http.ServeMux {
 
 // Config holds all server tunables parsed from flags and env.
 type Config struct {
-	Host          string
-	Port          int
-	Project       string
-	PublicURL     string
-	Token         string
-	TokenOwned    bool // true if we generated the token and must unlink the secret file
-	SecretPath    string
-	MaxHops       int
-	MessageTTLMS  int
-	MaxInbox      int
-	HeartbeatMS   int
-	StaleAfterMS  int
+	Host           string
+	Port           int
+	Project        string
+	PublicURL      string
+	Token          string
+	TokenOwned     bool // true if we generated the token and must unlink the secret file
+	SecretPath     string
+	MaxHops        int
+	MessageTTLMS   int
+	MaxInbox       int
+	HeartbeatMS    int
+	StaleAfterMS   int
 	OfflineAfterMS int
-	NoColor       bool
+	NoColor        bool
 }
 
 // ParseConfig reads flags from args (after the "serve" subcommand) and env vars,
 // matching the TS server's env-var precedence: flag > env > default.
 func ParseConfig(args []string) (*Config, error) {
 	cfg := &Config{
-		Host:          envStr("PI_COMS_NET_HOST", defaultHost),
-		Port:          envInt("PI_COMS_NET_PORT", defaultPort),
-		Project:       envStr("PI_COMS_NET_PROJECT", defaultProject),
-		PublicURL:     os.Getenv("PI_COMS_NET_PUBLIC_URL"),
-		Token:         os.Getenv("PI_COMS_NET_AUTH_TOKEN"),
-		MaxHops:       envInt("PI_COMS_NET_MAX_HOPS", defaultMaxHops),
-		MessageTTLMS:  envInt("PI_COMS_NET_MESSAGE_TTL_MS", defaultMessageTTLMS),
-		MaxInbox:      envInt("PI_COMS_NET_MAX_INBOX", defaultMaxInbox),
-		HeartbeatMS:   envInt("PI_COMS_NET_HEARTBEAT_MS", defaultHeartbeatMS),
-		StaleAfterMS:  envInt("PI_COMS_NET_STALE_AFTER_MS", defaultStaleAfterMS),
-		OfflineAfterMS: envInt("PI_COMS_NET_OFFLINE_AFTER_MS", defaultOfflineAfterMS),
+		Host:           util.EnvOr("PI_COMS_NET_HOST", defaultHost),
+		Port:           util.EnvInt("PI_COMS_NET_PORT", defaultPort),
+		Project:        util.EnvOr("PI_COMS_NET_PROJECT", defaultProject),
+		PublicURL:      os.Getenv("PI_COMS_NET_PUBLIC_URL"),
+		Token:          os.Getenv("PI_COMS_NET_AUTH_TOKEN"),
+		MaxHops:        util.EnvInt("PI_COMS_NET_MAX_HOPS", defaultMaxHops),
+		MessageTTLMS:   util.EnvInt("PI_COMS_NET_MESSAGE_TTL_MS", defaultMessageTTLMS),
+		MaxInbox:       util.EnvInt("PI_COMS_NET_MAX_INBOX", defaultMaxInbox),
+		HeartbeatMS:    util.EnvInt("PI_COMS_NET_HEARTBEAT_MS", defaultHeartbeatMS),
+		StaleAfterMS:   util.EnvInt("PI_COMS_NET_STALE_AFTER_MS", defaultStaleAfterMS),
+		OfflineAfterMS: util.EnvInt("PI_COMS_NET_OFFLINE_AFTER_MS", defaultOfflineAfterMS),
 	}
 
 	// Parse flags.
@@ -242,7 +243,7 @@ func Run(args []string) error {
 	sj.ServerID = st.serverID
 
 	sjData, _ := json.MarshalIndent(sj, "", "  ")
-	if err := atomicWrite(serverJSONPath, sjData, 0); err != nil {
+	if err := util.AtomicWrite(serverJSONPath, sjData, 0); err != nil {
 		return fmt.Errorf("write server.json: %w", err)
 	}
 
@@ -321,25 +322,6 @@ func Run(args []string) error {
 
 func isLoopback(host string) bool {
 	return host == "127.0.0.1" || host == "::1" || host == "localhost"
-}
-
-func envStr(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
-}
-
-func envInt(key string, def int) int {
-	v := os.Getenv(key)
-	if v == "" {
-		return def
-	}
-	n, err := strconv.Atoi(v)
-	if err != nil {
-		return def
-	}
-	return n
 }
 
 // isTerminal reports whether f is a terminal (TTY).

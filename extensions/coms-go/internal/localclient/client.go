@@ -31,15 +31,15 @@ import (
 // Config holds configuration passed from the CLI / env (set by main.go).
 type Config struct {
 	// Identity
-	Name    string // --name flag or PI_COMS_NAME
-	Purpose string // --purpose flag or PI_COMS_PURPOSE
-	Project string // --project flag or PI_COMS_PROJECT; default "default"
-	Color   string // --color flag or PI_COMS_COLOR
-	Explicit bool  // --explicit flag or PI_COMS_EXPLICIT=1
+	Name     string // --name flag or PI_COMS_NAME
+	Purpose  string // --purpose flag or PI_COMS_PURPOSE
+	Project  string // --project flag or PI_COMS_PROJECT; default "default"
+	Color    string // --color flag or PI_COMS_COLOR
+	Explicit bool   // --explicit flag or PI_COMS_EXPLICIT=1
 
 	// Tuning (env-var names match coms.ts constants)
-	MaxHops    int // PI_COMS_MAX_HOPS; default 5
-	TimeoutMs  int // PI_COMS_TIMEOUT_MS; default 1_800_000 (30 min)
+	MaxHops        int // PI_COMS_MAX_HOPS; default 5
+	TimeoutMs      int // PI_COMS_TIMEOUT_MS; default 1_800_000 (30 min)
 	PingIntervalMs int // PI_COMS_PING_INTERVAL_MS; default 10_000
 
 	// Identity supplied by shim at session start
@@ -57,15 +57,15 @@ func DefaultConfig() Config {
 	cfg := Config{
 		Name:           os.Getenv("PI_COMS_NAME"),
 		Purpose:        os.Getenv("PI_COMS_PURPOSE"),
-		Project:        envOr("PI_COMS_PROJECT", "default"),
+		Project:        util.EnvOr("PI_COMS_PROJECT", "default"),
 		Color:          os.Getenv("PI_COMS_COLOR"),
 		Explicit:       os.Getenv("PI_COMS_EXPLICIT") == "1",
-		MaxHops:        envInt("PI_COMS_MAX_HOPS", 5),
-		TimeoutMs:      envInt("PI_COMS_TIMEOUT_MS", 1_800_000),
-		PingIntervalMs: envInt("PI_COMS_PING_INTERVAL_MS", 10_000),
+		MaxHops:        util.EnvInt("PI_COMS_MAX_HOPS", 5),
+		TimeoutMs:      util.EnvInt("PI_COMS_TIMEOUT_MS", 1_800_000),
+		PingIntervalMs: util.EnvInt("PI_COMS_PING_INTERVAL_MS", 10_000),
 		SessionID:      os.Getenv("PI_SESSION_ID"),
-		Cwd:            envOr("PI_CWD", mustGetwd()),
-		Model:          envOr("PI_MODEL", "unknown"),
+		Cwd:            util.EnvOr("PI_CWD", util.MustGetwd()),
+		Model:          util.EnvOr("PI_MODEL", "unknown"),
 		Stdin:          os.Stdin,
 		Stdout:         os.Stdout,
 	}
@@ -330,11 +330,11 @@ func (c *Client) initIdentity() error {
 	}
 	if resolvedName != desiredName {
 		_ = c.audit.Append(map[string]any{
-			"event":   "name_collision",
-			"desired": desiredName,
+			"event":    "name_collision",
+			"desired":  desiredName,
 			"assigned": resolvedName,
-			"project": project,
-			"ts":      util.NowIso(),
+			"project":  project,
+			"ts":       util.NowIso(),
 		})
 	}
 
@@ -355,7 +355,7 @@ func (c *Client) initIdentity() error {
 
 	cwd := cfg.Cwd
 	if cwd == "" {
-		cwd = mustGetwd()
+		cwd = util.MustGetwd()
 	}
 	model := cfg.Model
 	if model == "" {
@@ -452,18 +452,18 @@ func (c *Client) keepalive() {
 	now := util.NowIso()
 	hbAt := now
 	entry := proto.RegistryEntry{
-		SessionID: id.sessionID,
-		Name:      id.name,
-		Purpose:   id.purpose,
-		Model:     id.model,
-		Color:     id.color,
-		Pid:       os.Getpid(),
-		Endpoint:  id.endpoint,
-		Cwd:       id.cwd,
-		StartedAt: now,
-		Explicit:  id.explicit,
-		Version:   1,
-		QueueDepth: func() *int { v := queueDepth; return &v }(),
+		SessionID:   id.sessionID,
+		Name:        id.name,
+		Purpose:     id.purpose,
+		Model:       id.model,
+		Color:       id.color,
+		Pid:         os.Getpid(),
+		Endpoint:    id.endpoint,
+		Cwd:         id.cwd,
+		StartedAt:   now,
+		Explicit:    id.explicit,
+		Version:     1,
+		QueueDepth:  func() *int { v := queueDepth; return &v }(),
 		HeartbeatAt: hbAt,
 	}
 	_, _ = registry.Write(entry, id.project)
@@ -548,32 +548,4 @@ func listProjects(comsDir string) []string {
 		}
 	}
 	return out
-}
-
-func envOr(key, def string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
-	}
-	return def
-}
-
-func envInt(key string, def int) int {
-	v := os.Getenv(key)
-	if v == "" {
-		return def
-	}
-	n := 0
-	fmt.Sscanf(v, "%d", &n)
-	if n <= 0 {
-		return def
-	}
-	return n
-}
-
-func mustGetwd() string {
-	d, err := os.Getwd()
-	if err != nil {
-		return "/tmp"
-	}
-	return d
 }

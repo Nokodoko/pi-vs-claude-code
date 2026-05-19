@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"syscall"
 )
 
 // Entry is a single audit log line. Fields must remain limited to event
@@ -53,6 +54,19 @@ func (l *Logger) Append(entry Entry) error {
 		return fmt.Errorf("audit open: %w", err)
 	}
 	defer f.Close()
+
+	// Acquire an OS-level exclusive advisory lock so that concurrent writers
+	// from multiple processes (e.g., coms-go client-local and client-net both
+	// writing to ~/.pi/coms-log) do not interleave partial JSONL lines.
+	// This is required by spec §7 ("Audit log appends").
+	// The in-process sync.Mutex above handles single-binary concurrency; flock
+	// handles multi-process safety.
+	fd := int(f.Fd())
+	if err := syscall.Flock(fd, syscall.LOCK_EX); err != nil {
+		return fmt.Errorf("audit flock: %w", err)
+	}
+	defer syscall.Flock(fd, syscall.LOCK_UN) //nolint:errcheck
+
 	if _, err := f.Write(data); err != nil {
 		return fmt.Errorf("audit write: %w", err)
 	}

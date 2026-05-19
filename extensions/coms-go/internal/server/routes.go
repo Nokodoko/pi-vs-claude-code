@@ -35,12 +35,10 @@ func registerRoutes(mux *http.ServeMux, st *ServerState, cfg *Config) {
 		h.dispatchV1(w, r)
 	})
 
-	// Catch-all for unknown non-/v1 routes (including /).
+	// Catch-all: any path not matched by /health or /v1/ returns 404.
+	// The TS server returns 404 for unknown routes; a 200-empty response would
+	// violate the parity contract (T8 required fix).
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			// Let /v1/ handle its own
-			return
-		}
 		writeError(w, "not_found", http.StatusNotFound, nil)
 	})
 }
@@ -671,19 +669,18 @@ func (h *handlers) handleAwaitMessage(w http.ResponseWriter, r *http.Request, ms
 		timeoutMS = int64(h.cfg.MessageTTLMS)
 	}
 
-	// Register awaiter.
+	// Register awaiter. The timer is constructed and assigned to a.timer BEFORE
+	// publishing a into foundP.awaiters so that releaseAwaiters (which reads
+	// a.timer under foundP.mu write lock) can never observe a nil timer — this
+	// eliminates the data race reported by -race on TestPiToPiRoundTrip.
 	a := &Awaiter{
 		ch: make(chan proto.ComsMessage, 1),
 	}
 
-	foundP.mu.Lock()
-	if foundP.awaiters[msgID] == nil {
-		foundP.awaiters[msgID] = make(map[*Awaiter]struct{})
-	}
-	foundP.awaiters[msgID][a] = struct{}{}
-	foundP.mu.Unlock()
-
-	timer := time.AfterFunc(time.Duration(timeoutMS)*time.Millisecond, func() {
+	// Construct the timer first (still pre-publication, so no concurrent reader
+	// can see a yet). The callback references a and foundP, which are stable.
+	var timer *time.Timer
+	timer = time.AfterFunc(time.Duration(timeoutMS)*time.Millisecond, func() {
 		foundP.mu.Lock()
 		set := foundP.awaiters[msgID]
 		delete(set, a)
@@ -696,7 +693,14 @@ func (h *handlers) handleAwaitMessage(w http.ResponseWriter, r *http.Request, ms
 		default:
 		}
 	})
-	a.timer = timer
+	a.timer = timer // assigned before publication into awaiters map
+
+	foundP.mu.Lock()
+	if foundP.awaiters[msgID] == nil {
+		foundP.awaiters[msgID] = make(map[*Awaiter]struct{})
+	}
+	foundP.awaiters[msgID][a] = struct{}{} // a.timer visible to all readers after this
+	foundP.mu.Unlock()
 
 	ctx := r.Context()
 	var resolved proto.ComsMessage

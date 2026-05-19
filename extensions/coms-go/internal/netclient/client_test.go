@@ -69,7 +69,7 @@ func mockHub(t *testing.T) *httptest.Server {
 				Status:    proto.StatusOnline,
 			},
 			HeartbeatIntervalMs: 10000,
-			SseURL:             "/v1/events?project=" + req.Project + "&session_id=" + req.SessionID,
+			SseURL:              "/v1/events?project=" + req.Project + "&session_id=" + req.SessionID,
 		})
 	})
 
@@ -238,7 +238,7 @@ func TestRunNetClient_shutdown_sends_delete(t *testing.T) {
 				Project: req.Project, Status: proto.StatusOnline,
 			},
 			HeartbeatIntervalMs: 10000,
-			SseURL:             "/v1/events?project=default&session_id=" + req.SessionID,
+			SseURL:              "/v1/events?project=default&session_id=" + req.SessionID,
 		})
 	})
 	mux.HandleFunc("/v1/events", func(w http.ResponseWriter, r *http.Request) {
@@ -305,10 +305,10 @@ func TestSSE_exponentialBackoff(t *testing.T) {
 		json.NewDecoder(r.Body).Decode(&req)
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(proto.RegisterResponse{
-			Ok:                true,
-			Agent:             proto.AgentCard{SessionID: req.SessionID, Name: req.Name, Status: proto.StatusOnline},
+			Ok:                  true,
+			Agent:               proto.AgentCard{SessionID: req.SessionID, Name: req.Name, Status: proto.StatusOnline},
 			HeartbeatIntervalMs: 10000,
-			SseURL:            "/v1/events?session_id=" + req.SessionID,
+			SseURL:              "/v1/events?session_id=" + req.SessionID,
 		})
 	})
 	mux.HandleFunc("/v1/events", func(w http.ResponseWriter, r *http.Request) {
@@ -369,9 +369,9 @@ func TestSSE_exponentialBackoff(t *testing.T) {
 // TestSSEParser verifies the hand-rolled SSE parser handles frame boundaries.
 func TestSSEParser(t *testing.T) {
 	tests := []struct {
-		name    string
-		input   string
-		wantEvt string
+		name     string
+		input    string
+		wantEvt  string
 		wantData string
 	}{
 		{

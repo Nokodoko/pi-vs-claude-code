@@ -110,6 +110,52 @@ func TestNopLogger(t *testing.T) {
 	}
 }
 
+// TestCrossProcessFlock verifies that two distinct Logger values pointing at the
+// same path (simulating two coms-go processes on the same host) produce intact
+// JSONL — no interleaved partial lines. This is the cross-process safety test
+// required by spec §7 and T8 item 2.
+func TestCrossProcessFlock(t *testing.T) {
+	dir := t.TempDir()
+	p := filepath.Join(dir, "coms-log")
+
+	const goroutines = 20
+	const itersEach = 10
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for g := 0; g < goroutines; g++ {
+		g := g
+		go func() {
+			defer wg.Done()
+			// Each goroutine gets its OWN Logger (simulating a separate process).
+			l := audit.New(p)
+			for i := 0; i < itersEach; i++ {
+				_ = l.Append(audit.Entry{"event": "tick", "g": g, "i": i})
+			}
+		}()
+	}
+	wg.Wait()
+
+	f, err := os.Open(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+
+	count := 0
+	sc := bufio.NewScanner(f)
+	for sc.Scan() {
+		var m map[string]any
+		if err := json.Unmarshal(sc.Bytes(), &m); err != nil {
+			t.Errorf("interleaved/corrupt JSONL line: %q", sc.Text())
+		}
+		count++
+	}
+	want := goroutines * itersEach
+	if count != want {
+		t.Errorf("cross-process flock: got %d lines, want %d", count, want)
+	}
+}
+
 func TestNoPayloadLeakage(t *testing.T) {
 	// This test documents the convention: the entry must NOT contain prompt/response.
 	// It checks that a compliant caller (with only event metadata) produces valid output.
@@ -117,11 +163,11 @@ func TestNoPayloadLeakage(t *testing.T) {
 	p := filepath.Join(dir, "coms-log")
 	l := audit.New(p)
 	e := audit.Entry{
-		"event":    "inbound_prompt",
-		"msg_id":   "01MSG00",
-		"sender":   "01SESS0",
-		"hops":     1,
-		"ts":       "2026-05-19T00:00:00.000Z",
+		"event":  "inbound_prompt",
+		"msg_id": "01MSG00",
+		"sender": "01SESS0",
+		"hops":   1,
+		"ts":     "2026-05-19T00:00:00.000Z",
 		// NOTE: "prompt" key is intentionally absent — this is correct usage.
 	}
 	if err := l.Append(e); err != nil {

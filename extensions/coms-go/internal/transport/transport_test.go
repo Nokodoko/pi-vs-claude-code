@@ -252,3 +252,78 @@ func TestBindEndpointInUse(t *testing.T) {
 		t.Error("BindEndpoint should fail when socket is in use")
 	}
 }
+
+// TestWriteEnvelopeTooLarge verifies that envelopes exceeding LineCap are rejected.
+func TestWriteEnvelopeTooLarge(t *testing.T) {
+	// Construct a payload that will exceed LineCap after JSON encoding.
+	// The JSON encoding of a map with a large string value will be >64KB.
+	big := strings.Repeat("x", transport.LineCap)
+	var buf bytes.Buffer
+	err := transport.WriteEnvelope(&buf, map[string]string{"data": big})
+	if err == nil {
+		t.Error("WriteEnvelope should return error for oversized envelope")
+	}
+	if !strings.Contains(err.Error(), "too large") {
+		t.Errorf("error message = %q, want 'too large'", err.Error())
+	}
+}
+
+// TestProbeStaleSocket_noFile verifies that a nonexistent socket path is reported as stale.
+func TestProbeStaleSocket_noFile(t *testing.T) {
+	dir := t.TempDir()
+	sock := filepath.Join(dir, "nonexistent.sock")
+	verdict := transport.ProbeStaleSocket(sock)
+	if verdict != "stale" {
+		t.Errorf("ProbeStaleSocket nonexistent = %q, want stale", verdict)
+	}
+}
+
+// TestReadOneLine verifies that ReadOneLine reads exactly one newline-terminated line.
+func TestReadOneLine(t *testing.T) {
+	dir := t.TempDir()
+	sock := filepath.Join(dir, "readline.sock")
+
+	l, err := transport.BindEndpoint(sock)
+	if err != nil {
+		t.Fatalf("BindEndpoint: %v", err)
+	}
+	defer l.Close()
+
+	payload := `{"type":"ping","msg_id":"01TESTX"}` + "\n"
+	done := make(chan []byte, 1)
+	go func() {
+		conn, err := l.Accept()
+		if err != nil {
+			done <- nil
+			return
+		}
+		defer conn.Close()
+		line, _ := transport.ReadOneLine(conn)
+		done <- line
+	}()
+
+	conn, err := net.Dial("unix", sock)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	conn.Write([]byte(payload))
+	conn.Close()
+
+	got := <-done
+	if string(got) != strings.TrimRight(payload, "\n") {
+		t.Errorf("ReadOneLine = %q, want %q", got, strings.TrimRight(payload, "\n"))
+	}
+}
+
+// TestSocketDir returns a path under PI_COMS_DIR when set.
+func TestSocketDir(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("PI_COMS_DIR", dir)
+	got := transport.SocketDir()
+	if !strings.HasPrefix(got, dir) {
+		t.Errorf("SocketDir = %q, want prefix %q", got, dir)
+	}
+	if !strings.HasSuffix(got, "sockets") {
+		t.Errorf("SocketDir = %q, want suffix 'sockets'", got)
+	}
+}

@@ -5,7 +5,6 @@
 package netclient
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -27,8 +26,8 @@ type SSEEvent struct {
 
 // SSEParser accumulates bytes and emits complete SSE frames.
 type SSEParser struct {
-	buf      bytes.Buffer
-	onEvent  func(SSEEvent)
+	buf     bytes.Buffer
+	onEvent func(SSEEvent)
 }
 
 // NewSSEParser returns a parser that calls onEvent for each complete SSE frame.
@@ -89,15 +88,11 @@ func (p *SSEParser) dispatch(frame string) {
 // SSE read loop
 // ─────────────────────────────────────────────────────────────────────────────
 
-// readSSEStream reads SSE frames from body until EOF or ctx cancellation.
-// It returns the error that caused the stream to end.
+// readSSEStream reads SSE frames from body until EOF or an error.
+// It feeds raw bytes to the SSE parser which handles frame boundaries.
+// Returns nil on clean EOF, or the error that caused the stream to end.
 func readSSEStream(body io.ReadCloser, onEvent func(SSEEvent)) error {
 	parser := NewSSEParser(onEvent)
-	sc := bufio.NewScanner(body)
-	sc.Buffer(make([]byte, 64*1024), 64*1024)
-
-	// We scan line by line but feed pairs to the parser.
-	// Simpler: just feed raw bytes.
 	buf := make([]byte, 4096)
 	for {
 		n, err := body.Read(buf)
@@ -105,7 +100,6 @@ func readSSEStream(body io.ReadCloser, onEvent func(SSEEvent)) error {
 			parser.Feed(buf[:n])
 		}
 		if err != nil {
-			_ = sc // suppress unused warning
 			if err == io.EOF {
 				return nil
 			}
