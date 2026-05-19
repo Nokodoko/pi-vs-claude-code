@@ -118,42 +118,71 @@ all:
     just open agent-chain theme-cycler
     just open pi-pi theme-cycler
 
+# ------------------------ coms-go build / test / vet ------------------------
+
+# Build coms-go for the current platform (static, no CGO)
+coms-go-build:
+    (cd extensions/coms-go && CGO_ENABLED=0 go build -o bin/coms-go-$(go env GOOS)-$(go env GOARCH) ./cmd/coms-go)
+
+# Alias: build-coms-go (same as coms-go-build)
+build-coms-go:
+    just coms-go-build
+
+# Run unit tests for coms-go
+coms-go-test:
+    (cd extensions/coms-go && go test ./...)
+
+# Alias: test-coms-go (same as coms-go-test)
+test-coms-go:
+    just coms-go-test
+
+# Run integration tests for coms-go (requires //go:build integration tag)
+test-coms-go-integration:
+    (cd extensions/coms-go && go test -tags=integration ./...)
+
+# Run go vet for coms-go
+coms-go-vet:
+    (cd extensions/coms-go && go vet ./...)
+
 # ------------------------ coms + coms-net (HTTP/SSE hub) ------------------------
 
-# Coms: peer-to-peer, same machine messaging between Pi agents
-# Pass any pi/extension flags through, e.g.: just ext-coms --name dev --color "#72F1B8"
+# Coms: peer-to-peer, same machine messaging between Pi agents via coms-go shim
+# Pass any pi/extension flags through, e.g.: just local-coms --name dev --color "#72F1B8"
+# Until T11 cutover, TS fallback: pi -e extensions/coms.ts ...
 local-coms *args:
-    pi -e extensions/coms.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts {{args}}
+    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts {{args}}
 
-# Start a local coms-net server (binds 127.0.0.1, OS-claimed port)
+# Start a local coms-net server via "coms-go serve" (binds 127.0.0.1, OS-claimed port)
 # Auto-kills any stale process holding the pinned port first.
+# (Pre-cutover TS fallback: scripts/coms-net-server.ts — removed at T11)
 coms-net-server:
     -lsof -ti :${PI_COMS_NET_PORT:-52965} | xargs -r kill -TERM 2>/dev/null
-    bun scripts/coms-net-server.ts
+    (cd extensions/coms-go && ./bin/coms-go-$(go env GOOS)-$(go env GOARCH) serve)
 
-# Start a LAN-visible coms-net server (binds 0.0.0.0, requires PI_COMS_NET_AUTH_TOKEN)
+# Start a LAN-visible coms-net server via coms-go (binds 0.0.0.0, requires PI_COMS_NET_AUTH_TOKEN)
 # Auto-kills any stale process holding the pinned port first.
 coms-net-server-lan:
     -lsof -ti :${PI_COMS_NET_PORT:-52965} | xargs -r kill -TERM 2>/dev/null
-    PI_COMS_NET_HOST=0.0.0.0 bun scripts/coms-net-server.ts
+    (cd extensions/coms-go && PI_COMS_NET_HOST=0.0.0.0 ./bin/coms-go-$(go env GOOS)-$(go env GOARCH) serve)
 
-# Pi with networked coms client (auto-discovers local server.json)
-# Pass any flags through, e.g.: just ext-coms-net --name dev --server-url http://… --auth-token …
+# Pi with networked coms client via coms-go shim (auto-discovers local server.json)
+# Pass any flags through, e.g.: just coms --name dev --server-url http://… --auth-token …
+# Until T11 cutover, TS fallback: pi -e extensions/coms-net.ts ...
 coms *args:
-    pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts {{args}}
+    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts {{args}}
 
 # coms-net with gpt-5.5 (extra args still pass through, e.g. --name dev)
 coms1 *args:
-    pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --provider openai --model gpt-5.5 {{args}}
+    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --provider openai --model gpt-5.5 {{args}}
 
 # coms-net with claude-opus-4-7
 coms2 *args:
-    pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model claude-opus-4-7 {{args}}
+    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model claude-opus-4-7 {{args}}
 
 # coms-net with deepseek/deepseek-v4-pro
 coms3 *args:
-    pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model deepseek/deepseek-v4-pro {{args}}
+    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model deepseek/deepseek-v4-pro {{args}}
 
 # coms-net with z-ai/glm-5.1
 coms4 *args:
-    pi -e extensions/coms-net.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model z-ai/glm-5.1 {{args}}
+    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model z-ai/glm-5.1 {{args}}

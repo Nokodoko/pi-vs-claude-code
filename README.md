@@ -14,11 +14,10 @@ A collection of [Pi Coding Agent](https://github.com/mariozechner/pi-coding-agen
 
 ## Prerequisites
 
-All three are required:
-
 | Tool            | Purpose                   | Install                                                    |
 | --------------- | ------------------------- | ---------------------------------------------------------- |
-| **Bun** ≥ 1.3.2 | Runtime & package manager | [bun.sh](https://bun.sh)                                   |
+| **Bun** ≥ 1.3.2 | Runtime & package manager (required for all extensions except `coms-go`) | [bun.sh](https://bun.sh) |
+| **Go** ≥ 1.23   | Build toolchain for `coms-go` (coms/coms-net transport) | [go.dev/dl](https://go.dev/dl/) |
 | **just**        | Task runner               | `brew install just`                                        |
 | **pi**          | Pi Coding Agent CLI       | [Pi docs](https://github.com/mariozechner/pi-coding-agent) |
 
@@ -69,6 +68,9 @@ just ext-minimal  # works for all recipes, not just `pi`
 
 ```bash
 bun install
+
+# Build the coms-go binary (coms/coms-net transport)
+(cd extensions/coms-go && go build -o bin/coms-go ./cmd/coms-go)
 ```
 
 ---
@@ -91,8 +93,9 @@ bun install
 | **damage-control-continue** | `extensions/damage-control-continue.ts` | Same rules as `damage-control`, but blocked tool calls return actionable feedback instead of aborting — the agent's turn keeps running and can adapt   |
 | **agent-chain**         | `extensions/agent-chain.ts`         | Sequential pipeline orchestrator — chains multiple agents where each step's output feeds into the next step's prompt; use `/chain` to select and run       |
 | **pi-pi**               | `extensions/pi-pi.ts`               | Meta-agent that builds Pi agents using parallel research experts for documentation                                                                         |
-| **coms**                | `extensions/coms.ts`                | Peer-to-peer messaging between Pi agents on the **same machine** over Unix sockets / named pipes. Tools: `coms_list`, `coms_send`, `coms_get`, `coms_await` |
-| **coms-net**            | `extensions/coms-net.ts`            | Networked Pi-to-Pi via a shared HTTP/SSE hub (`scripts/coms-net-server.ts`). Works across machines on a LAN or behind a remote URL. Tools: `coms_net_*`     |
+| **coms-go**             | `extensions/coms-go/shim.ts`        | Go-native replacement for `coms` + `coms-net`: single static binary, no Bun runtime required for the transport. Same eight tools, same wire protocol. Load via `pi -e extensions/coms-go/shim.ts`. Build: `(cd extensions/coms-go && go build -o bin/coms-go ./cmd/coms-go)` |
+| **coms** _(TS, pre-cutover)_ | `extensions/coms.ts`           | Peer-to-peer messaging between Pi agents on the **same machine** over Unix sockets / named pipes. Tools: `coms_list`, `coms_send`, `coms_get`, `coms_await`. _Replaced by `coms-go` at T11 cutover; still functional as fallback._ |
+| **coms-net** _(TS, pre-cutover)_ | `extensions/coms-net.ts`   | Networked Pi-to-Pi via a shared HTTP/SSE hub. Works across machines on a LAN or behind a remote URL. Tools: `coms_net_*`. _Replaced by `coms-go serve` at T11 cutover; still functional as fallback._ |
 | **session-replay**      | `extensions/session-replay.ts`      | Scrollable timeline overlay of session history - showcasing customizable dialog UI                                                                         |
 | **theme-cycler**        | `extensions/theme-cycler.ts`        | Keyboard shortcuts (Ctrl+X/Ctrl+Q) and `/theme` command to cycle/switch between custom themes                                                              |
 
@@ -245,7 +248,7 @@ The deeper reason this pattern matters: **the best information is almost always 
 | **Transport** | Unix sockets / Windows named pipes | HTTP + Server-Sent Events |
 | **Scope** | One machine | Same machine, LAN, or remote URL |
 | **Discovery** | File registry at `~/.pi/coms/projects/<project>/agents/*.json` | Shared hub at `~/.pi/coms-net/projects/<project>/server.json` |
-| **Server** | None — agents listen directly | `bun scripts/coms-net-server.ts` (Bun HTTP hub) |
+| **Server** | None — agents listen directly | `coms-go serve` (Go HTTP/SSE hub); TS fallback: `bun scripts/coms-net-server.ts` |
 | **Tools** | `coms_list`, `coms_send`, `coms_get`, `coms_await` | `coms_net_list`, `coms_net_send`, `coms_net_get`, `coms_net_await` |
 | **Widget** | Live pool above the editor | Live pool above the editor |
 | **Auth** | OS file perms on `~/.pi/coms/` | `PI_COMS_NET_AUTH_TOKEN` (auto-generated for localhost, required for LAN/remote) |
@@ -288,7 +291,7 @@ Each agent shows a live pool widget of the others. From either side, the agent c
 `coms-net` is the same idea over HTTP/SSE. Now `planner` can live on your laptop and `coder` can live on a Mac Mini, an EU production box, or a remote VM — they meet through a shared hub. The agent on the sensitive side stays on the sensitive side; only the messages cross the wire. Same four tools, just `coms_net_*`-prefixed.
 
 ```bash
-# Terminal 1 — hub
+# Terminal 1 — hub (Go binary; TS fallback: bun scripts/coms-net-server.ts)
 just coms-net-server                # binds 127.0.0.1, OS-claimed port
 # or
 just coms-net-server-lan            # binds 0.0.0.0 — requires PI_COMS_NET_AUTH_TOKEN
