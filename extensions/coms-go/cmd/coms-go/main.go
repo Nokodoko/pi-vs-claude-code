@@ -5,6 +5,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/pi-vs-cc/coms-go/internal/server"
 )
 
 const version = "v1.0.0"
@@ -20,7 +22,10 @@ func main() {
 		fmt.Printf("coms-go %s\n", version)
 	case "serve":
 		// T3: replaces scripts/coms-net-server.ts
-		unimplemented("serve")
+		if err := server.Run(os.Args[2:]); err != nil {
+			fmt.Fprintf(os.Stderr, "coms-go serve: %v\n", err)
+			os.Exit(1)
+		}
 	case "client-local":
 		// T4: replaces extensions/coms.ts runtime logic
 		unimplemented("client-local")
