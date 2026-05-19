@@ -126,6 +126,24 @@ func BindEndpoint(endpoint string) (net.Listener, error) {
 	return l, nil
 }
 
+// ReadOneLine reads exactly one newline-delimited line from conn (up to LineCap
+// bytes). Used by the server connection handler to receive an inbound envelope.
+// Mirrors readOneLine() in coms.ts lines 425-458.
+func ReadOneLine(conn net.Conn) ([]byte, error) {
+	sc := bufio.NewScanner(conn)
+	sc.Buffer(make([]byte, LineCap), LineCap)
+	if !sc.Scan() {
+		if err := sc.Err(); err != nil {
+			return nil, fmt.Errorf("transport ReadOneLine: %w", err)
+		}
+		return nil, fmt.Errorf("transport ReadOneLine: connection closed")
+	}
+	line := sc.Bytes()
+	cp := make([]byte, len(line))
+	copy(cp, line)
+	return cp, nil
+}
+
 // SendEnvelope dials endpoint, writes v as a JSON line, reads one JSON line
 // response, and returns the raw response bytes.
 // Mirrors sendEnvelope() in coms.ts lines 460-489.
