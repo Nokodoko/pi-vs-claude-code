@@ -1,0 +1,7 @@
+{
+  "ok": false,
+  "error": "target_not_found",
+  "details": {
+    "target": "ghost"
+  }
+}

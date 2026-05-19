@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "agent": {
+    "session_id": "<ulid>",
+    "name": "<string>",
+    "purpose": "<string>",
+    "model": "<string>",
+    "color": "<string>",
+    "cwd": "<string>",
+    "project": "<string>",
+    "explicit": false,
+    "started_at": "<iso>",
+    "context_used_pct": 0,
+    "queue_depth": 0,
+    "status": "online"
+  },
+  "heartbeat_interval_ms": 10000,
+  "sse_url": "<sse_url>"
+}

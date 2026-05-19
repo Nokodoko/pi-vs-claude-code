@@ -1,0 +1,18 @@
+{
+  "method": "POST",
+  "path": "/v1/agents/register",
+  "headers": {
+    "Authorization": "Bearer <bearer>",
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "project": "default",
+    "session_id": "<ulid>",
+    "name": "planner",
+    "purpose": "Plans the work",
+    "model": "claude-opus-4-7",
+    "color": "#36F9F6",
+    "cwd": "/tmp",
+    "explicit": false
+  }
+}

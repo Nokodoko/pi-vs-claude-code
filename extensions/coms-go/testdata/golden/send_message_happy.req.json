@@ -1,0 +1,15 @@
+{
+  "method": "POST",
+  "path": "/v1/messages",
+  "headers": {
+    "Authorization": "Bearer <bearer>",
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "project": "default",
+    "sender_session": "<ulid>",
+    "target": "coder",
+    "prompt": "Hello coder",
+    "hops": 0
+  }
+}

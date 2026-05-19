@@ -1,0 +1,11 @@
+# SSE event surface captured from coms-go serve (Go reference — mirrors bun scripts/coms-net-server.ts output)
+# Format: one event block per line group; placeholders used for dynamic values.
+# Capture procedure: see README.md.
+
+event: hello
+id: 1
+data: {"server_id":"<ulid>","server_time":"<iso>"}
+
+event: pool_snapshot
+id: 2
+data: {"project":"default","agents":[]}

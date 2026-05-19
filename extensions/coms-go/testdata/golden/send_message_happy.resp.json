@@ -1,0 +1,6 @@
+{
+  "ok": true,
+  "msg_id": "<ulid>",
+  "status": "queued",
+  "target_session": "<string>"
+}

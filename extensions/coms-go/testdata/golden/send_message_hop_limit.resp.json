@@ -1,0 +1,8 @@
+{
+  "ok": false,
+  "error": "hop_limit_exceeded",
+  "details": {
+    "hops": 5,
+    "max_hops": 5
+  }
+}
