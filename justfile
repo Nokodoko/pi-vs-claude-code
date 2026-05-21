@@ -148,13 +148,11 @@ coms-go-vet:
 
 # Coms: peer-to-peer, same machine messaging between Pi agents via coms-go shim
 # Pass any pi/extension flags through, e.g.: just local-coms --name dev --color "#72F1B8"
-# Until T11 cutover, TS fallback: pi -e extensions/coms.ts ...
 local-coms *args:
     pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts {{args}}
 
 # Start a local coms-net server via "coms-go serve" (binds 127.0.0.1, OS-claimed port)
 # Auto-kills any stale process holding the pinned port first.
-# (Pre-cutover TS fallback: scripts/coms-net-server.ts — removed at T11)
 coms-net-server:
     -lsof -ti :${PI_COMS_NET_PORT:-52965} | xargs -r kill -TERM 2>/dev/null
     (cd extensions/coms-go && ./bin/coms-go-$(go env GOOS)-$(go env GOARCH) serve)
@@ -167,7 +165,6 @@ coms-net-server-lan:
 
 # Pi with networked coms client via coms-go shim (auto-discovers local server.json)
 # Pass any flags through, e.g.: just coms --name dev --server-url http://… --auth-token …
-# Until T11 cutover, TS fallback: pi -e extensions/coms-net.ts ...
 coms *args:
     pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts {{args}}
 
