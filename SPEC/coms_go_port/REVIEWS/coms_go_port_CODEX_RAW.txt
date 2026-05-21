@@ -1,0 +1,50 @@
+[codex] Starting Codex review thread.
+[codex] Thread ready (019e4183-f506-7e23-8159-ee8335d4807b).
+[codex] Reviewer started: current changes
+[codex] Running command: /usr/bin/zsh -lc 'git status --short && git diff --stat && git diff --cached --stat'
+[codex] Command completed: /usr/bin/zsh -lc 'git status --short && git diff --stat && git diff --cached --stat' (exit 0)
+[codex] Running command: /usr/bin/zsh -lc 'find SPEC -maxdepth 3 -type f -print'
+[codex] Command completed: /usr/bin/zsh -lc 'find SPEC -maxdepth 3 -type f -print' (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "sed -n '1,240p' SPEC/coms_go_port/coms_go_port.md && printf '\\n---RAW---\\...
+[codex] Command completed: /usr/bin/zsh -lc "sed -n '1,240p' SPEC/coms_go_port/coms_go_port.md && printf '\\n---RAW---\\... (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "ls -la && ls extensions scripts | head && sed -n '1,220p' extensions/coms.t...
+[codex] Command completed: /usr/bin/zsh -lc "ls -la && ls extensions scripts | head && sed -n '1,220p' extensions/coms.t... (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "grep -n \"Routes\\|route\\|GET\\|POST\\|DELETE\\|server.secret\\|stdout\\|s...
+[codex] Command completed: /usr/bin/zsh -lc "grep -n \"Routes\\|route\\|GET\\|POST\\|DELETE\\|server.secret\\|stdout\\|s... (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "sed -n '500,1245p' scripts/coms-net-server.ts"
+[codex] Command completed: /usr/bin/zsh -lc "sed -n '500,1245p' scripts/coms-net-server.ts" (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "sed -n '1245,1355p' scripts/coms-net-server.ts && sed -n '1180,1215p' SPEC/...
+[codex] Command completed: /usr/bin/zsh -lc "sed -n '1245,1355p' scripts/coms-net-server.ts && sed -n '1180,1215p' SPEC/... (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "grep -R \"appendEntry\\|coms-log\\|audit\\|append\" -n extensions/coms.ts e...
+[codex] Command completed: /usr/bin/zsh -lc "grep -R \"appendEntry\\|coms-log\\|audit\\|append\" -n extensions/coms.ts e... (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "sed -n '630,665p' extensions/coms.ts; sed -n '680,735p' extensions/coms-net...
+[codex] Command completed: /usr/bin/zsh -lc "sed -n '630,665p' extensions/coms.ts; sed -n '680,735p' extensions/coms-net... (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "grep -n \"server.json\\|server_id\\|ServerJson\" -n scripts/coms-net-server...
+[codex] Command completed: /usr/bin/zsh -lc "grep -n \"server.json\\|server_id\\|ServerJson\" -n scripts/coms-net-server... (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "sed -n '1450,1515p' scripts/coms-net-server.ts; sed -n '238,270p' SPEC/coms...
+[codex] Command completed: /usr/bin/zsh -lc "sed -n '1450,1515p' scripts/coms-net-server.ts; sed -n '238,270p' SPEC/coms... (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "nl -ba SPEC/coms_go_port/coms_go_port.md | sed -n '20,32p;60,72p;592,603p;1...
+[codex] Command completed: /usr/bin/zsh -lc "nl -ba SPEC/coms_go_port/coms_go_port.md | sed -n '20,32p;60,72p;592,603p;1... (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "grep -n \"console\\.log\\|console\\.error\" scripts/coms-net-server.ts | ta...
+[codex] Command completed: /usr/bin/zsh -lc "grep -n \"console\\.log\\|console\\.error\" scripts/coms-net-server.ts | ta... (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "grep -n \"function ackOk\\|function nack\\|function writeEnvelope\\|Pong\" ...
+[codex] Command completed: /usr/bin/zsh -lc "grep -n \"function ackOk\\|function nack\\|function writeEnvelope\\|Pong\" ... (exit 0)
+[codex] Running command: /usr/bin/zsh -lc "sed -n '1580,1645p' extensions/coms-net.ts"
+[codex] Command completed: /usr/bin/zsh -lc "sed -n '1580,1645p' extensions/coms-net.ts" (exit 0)
+[codex] Review output captured.
+[codex] Reviewer finished.
+[codex] Assistant message captured: The spec introduces acceptance checks that are not runnable as written for a nested Go module...
+[codex] Turn completed.
+# Codex Review
+
+Target: working tree diff
+
+The spec introduces acceptance checks that are not runnable as written for a nested Go module and contradicts the existing server's stdout logging behavior while requiring behavioral parity. These issues should be corrected before using the spec to drive implementation.
+
+Full review comments:
+
+- [P2] Use module-relative Go verification commands — /home/n0ko/Programs/ai/pi-vs-claude-code/SPEC/coms_go_port/coms_go_port.md:25-26
+  When this predicate is run from the repository root as written, `go vet ./extensions/coms-go/...` (and the adjacent `go test` predicate) will fail for a nested module rooted at `extensions/coms-go/` unless a top-level `go.work` or `go.mod` is also added. The task-level checks later correctly `cd extensions/coms-go`; the gating acceptance criteria should do the same or explicitly require a workspace, otherwise the migration can never satisfy its own shell-checkable outputs.
+
+- [P2] Preserve the server log stream for parity — /home/n0ko/Programs/ai/pi-vs-claude-code/SPEC/coms_go_port/coms_go_port.md:66-66
+  For `coms-go serve`, requiring event logs on stderr does not match the TS reference: `scripts/coms-net-server.ts` writes the event lines and boot banner with `console.log`, i.e. stdout. In environments or tests that capture stdout for supervised service logs, this breaks the stated “no visible difference”/byte-level parity contract; either keep serve logs on stdout or document this as an intentional non-parity change.
