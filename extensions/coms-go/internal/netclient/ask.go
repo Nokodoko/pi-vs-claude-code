@@ -188,8 +188,17 @@ func (c *Client) netAskBroadcastImpl(req ipc.Request, w *ipc.Writer, p netAskPar
 	wg.Wait()
 
 	// 3. Wait under a single shared deadline.
-	timer := time.NewTimer(time.Duration(timeoutMs) * time.Millisecond)
-	defer timer.Stop()
+	//
+	// timer.C delivers EXACTLY ONCE — fanning N goroutines on the same channel
+	// would deadlock all but the first. Use a deadline-closed `done` channel
+	// (broadcast semantics) so every per-peer goroutine observes the timeout.
+	deadline := time.NewTimer(time.Duration(timeoutMs) * time.Millisecond)
+	defer deadline.Stop()
+	done := make(chan struct{})
+	go func() {
+		<-deadline.C
+		close(done)
+	}()
 
 	type collected struct {
 		idx    int
@@ -210,7 +219,7 @@ func (c *Client) netAskBroadcastImpl(req ipc.Request, w *ipc.Writer, p netAskPar
 				res := fo.pr.result
 				fo.pr.mu.Unlock()
 				collectCh <- collected{idx: i, result: res, ok: true}
-			case <-timer.C:
+			case <-done:
 				collectCh <- collected{idx: i, ok: false}
 			}
 		}()
