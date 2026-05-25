@@ -37,8 +37,13 @@ function resolveBinary(): string | null {
 
 type Pending = { resolve: (v: any) => void; reject: (e: Error) => void };
 
+// InboundEntry — one queued inbound_prompt event from coms-go netclient.
+// Per-IPC-child FIFO; drained atomically by the before_agent_start hook.
+type InboundEntry = { msg_id: string; sender_name: string; sender_session: string; body: string; hops: number };
+
 function makeIpc(child: ChildProcess) {
 	const pending = new Map<string, Pending>();
+	const inboundQueue: InboundEntry[] = []; // T2: FIFO per child (drained in T3)
 	const rl = readline.createInterface({ input: child.stdout!, crlfDelay: Infinity });
 	rl.on("line", (raw) => {
 		let msg: any;
@@ -48,6 +53,20 @@ function makeIpc(child: ChildProcess) {
 			if (!p) return;
 			pending.delete(msg.id);
 			msg.kind === "tool_error" ? p.reject(new Error(msg.message ?? "ipc error")) : p.resolve(msg);
+			return;
+		}
+		// T2: handle unsolicited event frames from the Go child. Currently the
+		// only event is "inbound_prompt"; appended to a FIFO so multiple senders
+		// arriving within one agent_start window are all preserved (no last-wins).
+		if (msg.kind === "event" && msg.name === "inbound_prompt" && msg.data) {
+			const d = msg.data;
+			inboundQueue.push({
+				msg_id:         String(d.msg_id ?? ""),
+				sender_name:    String(d.sender_name ?? "unknown"),
+				sender_session: String(d.sender_session ?? ""),
+				body:           String(d.body ?? ""),
+				hops:           typeof d.hops === "number" ? d.hops : 0,
+			});
 		}
 	});
 	const send = (line: object) => { try { child.stdin!.write(JSON.stringify(line) + "\n"); } catch { /* child dead */ } };
@@ -58,7 +77,10 @@ function makeIpc(child: ChildProcess) {
 			send({ kind: "tool_request", id, tool, params });
 		});
 	};
-	return { call, send };
+	// drainInbound — atomically pull all queued entries (FIFO). Called by the
+	// before_agent_start hook (T3). Empties the queue in-place.
+	const drainInbound = (): InboundEntry[] => inboundQueue.splice(0);
+	return { call, send, drainInbound };
 }
 
 export default function (pi: ExtensionAPI) {
