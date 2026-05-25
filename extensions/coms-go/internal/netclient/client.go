@@ -139,6 +139,12 @@ type Client struct {
 	sseCancel         context.CancelFunc
 	reconnectAttempts int
 	toolWg            sync.WaitGroup // tracks in-flight dispatchTool goroutines
+
+	// ipcWriter is the unsolicited-event channel back to shim.ts. Set once in
+	// run() before the IPC select loop starts; read from any goroutine that
+	// needs to push an "event" frame (e.g. handleInboundPrompt). The underlying
+	// ipc.Writer is mutex-protected, so no extra locking is required here.
+	ipcWriter *ipc.Writer
 }
 
 const (
@@ -212,6 +218,7 @@ func (c *Client) run(ctx context.Context) error {
 		stdout = os.Stdout
 	}
 	w := ipc.NewWriter(stdout)
+	c.ipcWriter = w
 	requests := ipc.ReadRequests(stdin)
 
 	for {
@@ -744,6 +751,21 @@ func (c *Client) handleInboundPrompt(data map[string]any) {
 		"hops":   hops,
 		"ts":     util.NowIso(),
 	})
+
+	// T1: notify shim.ts of the inbound prompt so its before_agent_start hook
+	// can drain the queue and inject a directive into the receiver model. The
+	// event is push-only — shim correlates by msg_id, not by request id. The
+	// underlying ipc.Writer is mutex-protected so this is safe from sseLoop.
+	if c.ipcWriter != nil {
+		body := strField(data, "prompt")
+		_ = c.ipcWriter.Event("inbound_prompt", map[string]any{
+			"msg_id":         msgID,
+			"sender_name":    senderName,
+			"sender_session": senderSession,
+			"body":           body,
+			"hops":           hops,
+		})
+	}
 }
 
 // handleInboundResponse resolves a pending reply when the SSE `response` event arrives.
