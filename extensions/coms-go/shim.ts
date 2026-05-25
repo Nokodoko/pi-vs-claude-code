@@ -159,10 +159,20 @@ export default function (pi: ExtensionAPI) {
 		netIpc   = makeIpc(netChild);
 	});
 
-	pi.on("agent_end", async (_event, ctx) => {
-		const data = { cwd: ctx.cwd ?? process.cwd(), model: ctx.model?.id ?? "" };
-		localIpc?.send({ kind: "lifecycle", event: "agent_end", data });
-		netIpc?.send({ kind: "lifecycle", event: "agent_end", data });
+	pi.on("agent_end", async (event, ctx) => {
+		const baseData = { cwd: ctx.cwd ?? process.cwd(), model: ctx.model?.id ?? "" };
+		// T1.5: plumb the last assistant text through the net lifecycle frame so
+		// handleLifecycle (netclient/client.go) can call onAgentEnd and POST the
+		// reply back. Local payload stays unchanged — the local transport has no
+		// onAgentEnd path. See SPEC/coms_auto_await §11.1.
+		const messages = (event as any)?.messages ?? [];
+		const lastMsg  = [...messages].reverse().find((m: any) => m?.role === "assistant");
+		const lastText = (lastMsg?.content ?? [])
+			.filter((b: any) => b?.type === "text")
+			.map((b: any) => (typeof b?.text === "string" ? b.text : ""))
+			.join("");
+		localIpc?.send({ kind: "lifecycle", event: "agent_end", data: baseData });
+		netIpc?.send({   kind: "lifecycle", event: "agent_end", data: { ...baseData, last_text: lastText } });
 	});
 
 	pi.on("session_shutdown", async () => {
