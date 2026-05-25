@@ -434,3 +434,138 @@ func TestSSEParser_splitDelivery(t *testing.T) {
 		t.Errorf("Event = %v, want pool_snapshot", got[0].Event)
 	}
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// coms_net_ask — T8 unit tests (unicast happy + timeout)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// netAskIPC runs the net client against the given hub, fires one coms_net_ask
+// request with the provided params, then shuts down. Returns the parsed
+// tool_response or tool_error frame matched by id "ask-1".
+func netAskIPC(t *testing.T, hub *httptest.Server, params string) map[string]any {
+	t.Helper()
+	t.Setenv("PI_SESSION_ID", util.NewULID())
+	t.Setenv("PI_COMS_NAME", "ask-net-test")
+	t.Setenv("PI_COMS_NET_SERVER_URL", hub.URL)
+	t.Setenv("PI_COMS_NET_AUTH_TOKEN", testToken)
+
+	cfg := netclient.DefaultConfig()
+	stdinR, stdinW, _ := os.Pipe()
+	stdoutR, stdoutW, _ := os.Pipe()
+	cfg.Stdin = stdinR
+	cfg.Stdout = stdoutW
+
+	done := make(chan error, 1)
+	go func() { done <- netclient.Run(context.Background(), cfg) }()
+
+	// Give the client time to register + open SSE.
+	time.Sleep(150 * time.Millisecond)
+
+	req := ipc.Request{
+		Kind:   "tool_request",
+		ID:     "ask-1",
+		Tool:   "coms_net_ask",
+		Params: json.RawMessage(params),
+	}
+	line, _ := json.Marshal(req)
+	stdinW.Write(append(line, '\n'))
+
+	// Read frames until we see "ask-1".
+	deadline := time.Now().Add(5 * time.Second)
+	stdoutR.SetReadDeadline(deadline)
+	buf := make([]byte, 65536)
+	var resp map[string]any
+	read := 0
+	for time.Now().Before(deadline) {
+		n, _ := stdoutR.Read(buf[read:])
+		if n <= 0 {
+			break
+		}
+		read += n
+		lines := bytes.Split(bytes.TrimRight(buf[:read], "\n"), []byte("\n"))
+		for _, l := range lines {
+			var frame map[string]any
+			if json.Unmarshal(l, &frame) != nil {
+				continue
+			}
+			if frame["id"] == "ask-1" {
+				resp = frame
+				break
+			}
+		}
+		if resp != nil {
+			break
+		}
+	}
+
+	shut, _ := json.Marshal(ipc.Request{Kind: "shutdown"})
+	stdinW.Write(append(shut, '\n'))
+	stdinW.Close()
+	<-done
+	stdoutR.Close()
+	return resp
+}
+
+// TestToolNetAsk_unicastTimeout — server accepts the send but never delivers a
+// response SSE; the tool must error with "timeout waiting for reply".
+func TestToolNetAsk_unicastTimeout(t *testing.T) {
+	hub := mockHub(t)
+	defer hub.Close()
+
+	// 200ms timeout — fail fast.
+	resp := netAskIPC(t, hub, `{"target":"someone","prompt":"hi","timeout_ms":200}`)
+	if resp == nil {
+		t.Fatal("no response for ask-1")
+	}
+	if resp["kind"] != "tool_error" {
+		t.Errorf("kind = %v, want tool_error (timeout path)", resp["kind"])
+	}
+	if msg, _ := resp["message"].(string); !strings.Contains(msg, "timeout") {
+		t.Errorf("message = %q, want substring 'timeout'", msg)
+	}
+}
+
+// TestToolNetAsk_missingPrompt — empty prompt is rejected immediately.
+func TestToolNetAsk_missingPrompt(t *testing.T) {
+	hub := mockHub(t)
+	defer hub.Close()
+
+	resp := netAskIPC(t, hub, `{"target":"someone","prompt":""}`)
+	if resp == nil {
+		t.Fatal("no response for ask-1")
+	}
+	if resp["kind"] != "tool_error" {
+		t.Errorf("kind = %v, want tool_error (missing prompt)", resp["kind"])
+	}
+}
+
+// TestBroadcastResponse_marshal — types in ask.go round-trip cleanly.
+func TestBroadcastResponse_marshal(t *testing.T) {
+	errStr := "boom"
+	bag := netclient.BroadcastResponse{
+		Broadcast:  true,
+		TimeoutMs:  30000,
+		TotalPeers: 2,
+		Responded:  1,
+		TimedOut:   1,
+		Responses: []netclient.PeerResponse{
+			{Agent: "a", SessionID: "s1", Response: json.RawMessage(`"hi"`), Error: nil},
+			{Agent: "b", SessionID: "s2", Response: nil, Error: &errStr},
+		},
+		NoResponse: []netclient.PeerIdentity{{Agent: "c", SessionID: "s3"}},
+	}
+	raw, err := json.Marshal(bag)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var round netclient.BroadcastResponse
+	if err := json.Unmarshal(raw, &round); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if round.TotalPeers != 2 || round.Responded != 1 || round.TimedOut != 1 {
+		t.Errorf("counters lost in round-trip: %+v", round)
+	}
+	if len(round.Responses) != 2 || len(round.NoResponse) != 1 {
+		t.Errorf("slices lost in round-trip: %+v", round)
+	}
+}

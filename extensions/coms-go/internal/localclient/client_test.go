@@ -406,3 +406,84 @@ func TestHandleMalformedEnvelope(t *testing.T) {
 	pw.Close()
 	<-done
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// coms_ask — T8 unit tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+// askIPC runs the local client with one coms_ask request followed by shutdown,
+// returns the parsed response frame keyed by id.
+func askIPC(t *testing.T, params string) map[string]any {
+	t.Helper()
+	cfg := localclient.DefaultConfig()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	req := ipc.Request{
+		Kind:   "tool_request",
+		ID:     "ask-1",
+		Tool:   "coms_ask",
+		Params: json.RawMessage(params),
+	}
+	reqLine, _ := json.Marshal(req)
+	reqLine = append(reqLine, '\n')
+	shut, _ := json.Marshal(ipc.Request{Kind: "shutdown"})
+	shut = append(shut, '\n')
+
+	pr, pw, _ := os.Pipe()
+	pw.Write(append(reqLine, shut...))
+	pw.Close()
+
+	outR, outW, _ := os.Pipe()
+	cfg.Stdin = pr
+	cfg.Stdout = outW
+
+	done := make(chan error, 1)
+	go func() { done <- localclient.Run(ctx, cfg) }()
+	<-done
+	outW.Close()
+
+	buf := make([]byte, 65536)
+	n, _ := outR.Read(buf)
+	outR.Close()
+
+	lines := bytes.Split(bytes.TrimSpace(buf[:n]), []byte("\n"))
+	if len(lines) == 0 {
+		t.Fatal("no IPC output")
+	}
+	var resp map[string]any
+	_ = json.Unmarshal(lines[0], &resp)
+	return resp
+}
+
+// TestToolAsk_targetNotFound — coms_ask returns a tool_error when the named
+// peer is not present in the registry. Reuses the resolveTarget code path.
+func TestToolAsk_targetNotFound(t *testing.T) {
+	tempComsDir(t)
+	t.Setenv("PI_SESSION_ID", util.NewULID())
+	t.Setenv("PI_COMS_NAME", "ask-no-peer")
+
+	resp := askIPC(t, `{"target":"ghost","prompt":"hi"}`)
+
+	if resp["id"] != "ask-1" {
+		t.Errorf("id = %v, want ask-1", resp["id"])
+	}
+	if resp["kind"] != "tool_error" {
+		t.Errorf("kind = %v, want tool_error (no live agent)", resp["kind"])
+	}
+	if msg, _ := resp["message"].(string); !bytes.Contains([]byte(msg), []byte("coms_ask")) {
+		t.Errorf("message = %q, want substring 'coms_ask'", msg)
+	}
+}
+
+// TestToolAsk_missingParams — empty target or empty prompt is rejected.
+func TestToolAsk_missingParams(t *testing.T) {
+	tempComsDir(t)
+	t.Setenv("PI_SESSION_ID", util.NewULID())
+	t.Setenv("PI_COMS_NAME", "ask-empty")
+
+	resp := askIPC(t, `{"target":"","prompt":""}`)
+	if resp["kind"] != "tool_error" {
+		t.Errorf("kind = %v, want tool_error (missing params)", resp["kind"])
+	}
+}
