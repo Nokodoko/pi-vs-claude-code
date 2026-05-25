@@ -30,6 +30,8 @@ func (c *Client) dispatchTool(req ipc.Request, w *ipc.Writer) {
 		c.toolGet(req, w)
 	case "coms_await":
 		c.toolAwait(req, w)
+	case "coms_ask":
+		c.toolAsk(req, w)
 	default:
 		_ = w.RespondError(req.ID, fmt.Sprintf("coms: unknown tool %q", req.Tool))
 	}
@@ -376,6 +378,133 @@ func deliverAwaitResult(id string, result *pendingResult, w *ipc.Writer) {
 	_ = w.Respond(id,
 		[]ipc.ContentItem{{Type: "text", Text: respText}},
 		map[string]any{"response": result.response})
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// coms_ask — atomic send + await wrapper (T4)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Local-transport asymmetry vs. coms_net_ask: this is a convenience wrapper
+// only. It does NOT auto-inject a directive into the receiver. The receiver
+// model must already be running on the Unix socket peer and reacting normally;
+// only the SENDER side is automated. See SPEC/coms_auto_await §4.1 + §10
+// ("Local transport asymmetry").
+
+type askParams struct {
+	Target         string          `json:"target"`
+	Prompt         string          `json:"prompt"`
+	TimeoutMs      *int            `json:"timeout_ms"`
+	ConversationID *string         `json:"conversation_id"`
+	ResponseSchema json.RawMessage `json:"response_schema"`
+}
+
+func (c *Client) toolAsk(req ipc.Request, w *ipc.Writer) {
+	var p askParams
+	if err := json.Unmarshal(req.Params, &p); err != nil || p.Target == "" || p.Prompt == "" {
+		_ = w.RespondError(req.ID, "coms_ask: target and prompt are required")
+		return
+	}
+
+	c.mu.RLock()
+	id := c.identity
+	currentInbound := c.currentInbound
+	c.mu.RUnlock()
+
+	if id == nil {
+		_ = w.RespondError(req.ID, "coms: not initialised")
+		return
+	}
+
+	target := c.resolveTarget(p.Target)
+	if target == nil {
+		_ = w.RespondError(req.ID, fmt.Sprintf("coms_ask: no live agent matching %q", p.Target))
+		return
+	}
+
+	hops := 0
+	if currentInbound != nil {
+		hops = currentInbound.hops + 1
+	}
+	if hops >= c.maxHops {
+		_ = w.RespondError(req.ID, fmt.Sprintf("coms_ask: hop limit reached (%d >= %d)", hops, c.maxHops))
+		return
+	}
+
+	msgID := util.NewULID()
+	env := proto.PromptEnvelope{
+		Envelope: proto.Envelope{
+			Type:           "prompt",
+			MsgID:          msgID,
+			SenderSession:  id.sessionID,
+			SenderEndpoint: id.endpoint,
+			Hops:           hops,
+			Timestamp:      util.NowIso(),
+		},
+		Prompt:         p.Prompt,
+		SenderName:     id.name,
+		SenderCwd:      id.cwd,
+		ConversationID: p.ConversationID,
+		ResponseSchema: p.ResponseSchema,
+	}
+
+	if _, err := transport.SendEnvelope(target.Endpoint, env); err != nil {
+		_ = w.RespondError(req.ID, fmt.Sprintf("coms_ask: send failed: %v", err))
+		return
+	}
+
+	// Register pending reply (identical bookkeeping to toolSend).
+	pr := &pendingReply{
+		ready:      make(chan struct{}),
+		targetName: target.Name,
+		createdAt:  util.NowIso(),
+	}
+	c.mu.Lock()
+	c.pendingReplies[msgID] = pr
+	c.mu.Unlock()
+
+	_ = c.audit.Append(map[string]any{
+		"event":  "outbound_prompt",
+		"msg_id": msgID,
+		"target": target.Name,
+		"hops":   hops,
+		"ts":     util.NowIso(),
+	})
+
+	// Determine timeout (defaults to client-level c.timeoutMs).
+	timeoutMs := c.timeoutMs
+	if p.TimeoutMs != nil && *p.TimeoutMs > 0 {
+		timeoutMs = *p.TimeoutMs
+	}
+
+	// Block until reply arrives or timeout fires.
+	timer := time.NewTimer(time.Duration(timeoutMs) * time.Millisecond)
+	defer timer.Stop()
+
+	select {
+	case <-pr.ready:
+		pr.mu.Lock()
+		result := pr.result
+		pr.mu.Unlock()
+		if result == nil {
+			_ = w.RespondError(req.ID, fmt.Sprintf("coms_ask: internal error — pending reply closed with no result for %s", target.Name))
+			return
+		}
+		if result.errMsg != "" {
+			_ = w.RespondError(req.ID, fmt.Sprintf("coms_ask: %s", result.errMsg))
+			return
+		}
+		respText := jsonToString(result.response)
+		details := map[string]any{
+			"msg_id":         msgID,
+			"target":         target.Name,
+			"target_session": target.SessionID,
+			"hops":           hops,
+			"response":       result.response,
+		}
+		_ = w.Respond(req.ID, []ipc.ContentItem{{Type: "text", Text: respText}}, details)
+	case <-timer.C:
+		_ = w.RespondError(req.ID, fmt.Sprintf("coms_ask: timeout waiting for reply from %s", target.Name))
+	}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

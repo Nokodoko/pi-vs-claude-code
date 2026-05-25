@@ -128,6 +128,11 @@ export default function (pi: ExtensionAPI) {
 		parameters: Type.Object({ msg_id: Type.String({ description: "msg_id returned by coms_send." }), timeout_ms: Type.Optional(Type.Number({ description: "Override default timeout (ms)." })) }),
 		execute: fwd(() => localIpc, "coms_await") as any });
 
+	pi.registerTool({ name: "coms_ask",   label: "Coms Ask",
+		description: "Atomic send+await over the local (Unix-socket) transport. One tool call returns the peer's full response. Convenience wrapper around coms_send + coms_await — the receiver model is NOT auto-prompted (local transport asymmetry); use coms_net_ask for full auto-injection.",
+		parameters: Type.Object({ target: Type.String({ description: "Peer name (scoped to project) or session_id." }), prompt: Type.String({ description: "The prompt to send. The peer will receive this and reply." }), timeout_ms: Type.Optional(Type.Number({ description: "Max ms to wait for reply. Default PI_COMS_TIMEOUT_MS (1 800 000)." })), conversation_id: Type.Optional(Type.String()), response_schema: Type.Optional(Type.Any({ description: "Optional JSON Schema for the expected response shape." })) }),
+		execute: fwd(() => localIpc, "coms_ask") as any });
+
 	// ━━ Net tools (client-net) ━━
 	pi.registerTool({ name: "coms_net_list",  label: "Coms Net List",
 		description: "List peer agents on the coms-net hub for the current project. Returns names, models, and live context-window usage. Set include_explicit=true to reveal agents launched with --explicit.",
