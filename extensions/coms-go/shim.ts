@@ -154,6 +154,11 @@ export default function (pi: ExtensionAPI) {
 		parameters: Type.Object({ msg_id: Type.String({ description: "msg_id returned by coms_net_send." }), timeout_ms: Type.Optional(Type.Number({ description: "Override default timeout (ms). Server cap applies." })) }),
 		execute: fwd(() => netIpc, "coms_net_await") as any });
 
+	pi.registerTool({ name: "coms_net_ask", label: "Coms Net Ask",
+		description: "Atomic send+await over the coms-net hub. One tool call returns the peer's full response. With a target: unicast. Without a target (omit): broadcast to all peers in the project, returning a bag of responses received within timeout_ms (zero responses is NOT an error). Receiver-side auto-injection makes this fully hands-free.",
+		parameters: Type.Object({ target: Type.Optional(Type.String({ description: "Peer name or session_id. Omit for broadcast." })), prompt: Type.String({ description: "The prompt to send." }), timeout_ms: Type.Optional(Type.Number({ description: "Deadline for collecting responses (ms). Default 30 000 (interactive latency)." })), conversation_id: Type.Optional(Type.String()), response_schema: Type.Optional(Type.Any()) }),
+		execute: fwd(() => netIpc, "coms_net_ask") as any });
+
 	// ━━ Slash commands ━━
 	const rng = () => crypto.randomBytes(4).toString("hex");
 	pi.registerCommand("coms",     { description: "Force-refresh the coms pool widget (--all / --project <name>)",     handler: async (args) => { localIpc?.send({ kind: "command", id: rng(), name: "coms",     args: args ?? "" }); } });

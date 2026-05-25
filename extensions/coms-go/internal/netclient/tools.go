@@ -22,6 +22,8 @@ func (c *Client) dispatchTool(req ipc.Request, w *ipc.Writer) {
 		c.toolNetGet(req, w)
 	case "coms_net_await":
 		c.toolNetAwait(req, w)
+	case "coms_net_ask":
+		c.toolNetAsk(req, w)
 	default:
 		_ = w.RespondError(req.ID, fmt.Sprintf("coms-net: unknown tool %q", req.Tool))
 	}
@@ -450,6 +452,171 @@ func deliverNetAwaitResult(id string, result *netPendingResult, w *ipc.Writer) {
 	_ = w.Respond(id,
 		[]ipc.ContentItem{{Type: "text", Text: respText}},
 		map[string]any{"response": result.response})
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// coms_net_ask — atomic send+await over HTTP/SSE (T5 unicast, T6 broadcast)
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Sender side of the auto-await pattern. Model sees one tool call; internally:
+//   1. Resolve target (or enumerate peers for broadcast — T6).
+//   2. POST /v1/messages (one per peer for broadcast).
+//   3. Register pendingReply entries.
+//   4. Block until reply arrives via SSE response event, or timeout fires.
+//
+// Receiver side is automated by the inbound_prompt event + before_agent_start
+// hook (T1-T3). Default timeout is 30 s (interactive latency), not the 30 min
+// of coms_net_await.
+
+const netAskDefaultTimeoutMs = 30_000
+
+type netAskParams struct {
+	Target         *string         `json:"target"`
+	Prompt         string          `json:"prompt"`
+	TimeoutMs      *int            `json:"timeout_ms"`
+	ConversationID *string         `json:"conversation_id"`
+	ResponseSchema json.RawMessage `json:"response_schema"`
+}
+
+func (c *Client) toolNetAsk(req ipc.Request, w *ipc.Writer) {
+	var p netAskParams
+	if err := json.Unmarshal(req.Params, &p); err != nil || p.Prompt == "" {
+		_ = w.RespondError(req.ID, "coms_net_ask: prompt is required")
+		return
+	}
+
+	timeoutMs := netAskDefaultTimeoutMs
+	if p.TimeoutMs != nil && *p.TimeoutMs > 0 {
+		timeoutMs = *p.TimeoutMs
+	}
+
+	target := ""
+	if p.Target != nil {
+		target = *p.Target
+	}
+
+	// Broadcast path (T6) — no target specified.
+	if target == "" {
+		c.netAskBroadcast(req, w, p, timeoutMs)
+		return
+	}
+
+	// Unicast path (T5).
+	c.netAskUnicast(req, w, p, target, timeoutMs)
+}
+
+func (c *Client) netAskUnicast(req ipc.Request, w *ipc.Writer, p netAskParams, target string, timeoutMs int) {
+	c.mu.RLock()
+	id := c.identity
+	serverURL := c.serverURL
+	authToken := c.authToken
+	currentInbound := c.currentInbound
+	c.mu.RUnlock()
+
+	if id == nil {
+		_ = w.RespondError(req.ID, "coms-net not initialised")
+		return
+	}
+	if serverURL == "" || authToken == "" {
+		_ = w.RespondError(req.ID, "coms-net: no server connection")
+		return
+	}
+
+	hops := 0
+	if currentInbound != nil {
+		hops = currentInbound.hops + 1
+	}
+	if hops >= c.cfg.MaxHops {
+		_ = w.RespondError(req.ID, fmt.Sprintf("coms_net_ask: hop limit reached (%d >= %d)", hops, c.cfg.MaxHops))
+		return
+	}
+
+	sendReq := proto.SendRequest{
+		Project:        id.project,
+		SenderSession:  id.sessionID,
+		Target:         target,
+		TargetSession:  nil,
+		Prompt:         p.Prompt,
+		ConversationID: p.ConversationID,
+		ResponseSchema: p.ResponseSchema,
+		Hops:           hops,
+	}
+
+	respData, err := c.httpPost(context.Background(), serverURL+"/v1/messages", authToken, sendReq)
+	if err != nil {
+		errMsg := fmt.Sprintf("coms_net_ask: send failed: %v", safeErrorStr(err.Error(), authToken))
+		if he, ok := err.(*HTTPError); ok {
+			var errBody map[string]any
+			if json.Unmarshal([]byte(he.Body), &errBody) == nil {
+				if code, ok := errBody["error"].(string); ok {
+					errMsg = fmt.Sprintf("coms_net_ask: send failed (%d): %s", he.Status, code)
+				}
+			}
+		}
+		_ = w.RespondError(req.ID, errMsg)
+		return
+	}
+
+	var sendResp proto.SendResponse
+	if err := json.Unmarshal(respData, &sendResp); err != nil {
+		_ = w.RespondError(req.ID, "coms_net_ask: malformed send response")
+		return
+	}
+
+	msgID := sendResp.MsgID
+	targetSession := sendResp.TargetSession
+
+	pr := &netPendingReply{
+		ready:         make(chan struct{}),
+		targetName:    target,
+		targetSession: targetSession,
+		createdAt:     util.NowIso(),
+	}
+	c.mu.Lock()
+	c.pendingReplies[msgID] = pr
+	c.mu.Unlock()
+
+	// Note: ask_send audit event is added in T7. Intentionally absent here so
+	// the diffs for T5/T6/T7 stay surgical and aligned with §11 task table.
+
+	// Block until reply arrives or timeout fires.
+	timer := time.NewTimer(time.Duration(timeoutMs) * time.Millisecond)
+	defer timer.Stop()
+
+	select {
+	case <-pr.ready:
+		pr.mu.Lock()
+		result := pr.result
+		pr.mu.Unlock()
+		if result == nil {
+			_ = w.RespondError(req.ID, fmt.Sprintf("coms_net_ask: internal error — pending reply closed with no result for %s", target))
+			return
+		}
+		if result.errMsg != "" {
+			_ = w.RespondError(req.ID, fmt.Sprintf("coms_net_ask: %s", result.errMsg))
+			return
+		}
+		respText := jsonToStr(result.response)
+		details := map[string]any{
+			"msg_id":         msgID,
+			"target":         target,
+			"target_session": targetSession,
+			"hops":           hops,
+			"response":       result.response,
+		}
+		_ = w.Respond(req.ID, []ipc.ContentItem{{Type: "text", Text: respText}}, details)
+	case <-timer.C:
+		_ = w.RespondError(req.ID, fmt.Sprintf("coms_net_ask: timeout waiting for reply from %s", target))
+	}
+}
+
+// netAskBroadcast — broadcast path. Stub in T5; full implementation in T6
+// (internal/netclient/ask.go) which adds the BroadcastResponse types and the
+// fan-out goroutines.
+func (c *Client) netAskBroadcast(req ipc.Request, w *ipc.Writer, p netAskParams, timeoutMs int) {
+	_ = p
+	_ = timeoutMs
+	_ = w.RespondError(req.ID, "coms_net_ask: broadcast (no target) not yet implemented")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
