@@ -539,6 +539,127 @@ func TestToolNetAsk_missingPrompt(t *testing.T) {
 	}
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// T9 — broadcast collect-with-deadline tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+// broadcastHub returns an httptest.Server whose GET /v1/agents returns the
+// specified peer list. POST /v1/messages returns a fresh msg_id but never
+// pushes a response SSE — so every send times out. This is enough to exercise
+// the partial-result and all-timeout paths without an SSE injection harness.
+func broadcastHub(t *testing.T, peers []proto.AgentCard) *httptest.Server {
+	t.Helper()
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]any{"ok": true})
+	})
+	mux.HandleFunc("/v1/agents/register", func(w http.ResponseWriter, r *http.Request) {
+		var req proto.RegisterRequest
+		json.NewDecoder(r.Body).Decode(&req)
+		json.NewEncoder(w).Encode(proto.RegisterResponse{
+			Ok: true,
+			Agent: proto.AgentCard{
+				SessionID: req.SessionID, Name: req.Name, Project: req.Project,
+				Status: proto.StatusOnline,
+			},
+			HeartbeatIntervalMs: 10000,
+			SseURL:              "/v1/events?project=" + req.Project + "&session_id=" + req.SessionID,
+		})
+	})
+	mux.HandleFunc("/v1/agents", func(w http.ResponseWriter, r *http.Request) {
+		// Echo the static peer list.
+		json.NewEncoder(w).Encode(proto.ListAgentsResponse{Agents: peers})
+	})
+	mux.HandleFunc("/v1/agents/", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(map[string]any{"ok": true})
+	})
+	mux.HandleFunc("/v1/events", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		fmt.Fprintf(w, "event: hello\nid: 1\ndata: {}\n\n")
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+		<-r.Context().Done()
+	})
+	mux.HandleFunc("/v1/messages", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(proto.SendResponse{
+			Ok:            true,
+			MsgID:         util.NewULID(),
+			Status:        proto.MsgStatusDelivered,
+			TargetSession: util.NewULID(),
+		})
+	})
+	mux.HandleFunc("/v1/messages/", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode(proto.MessageStatusResponse{Status: proto.MsgStatusQueued})
+	})
+	return httptest.NewServer(mux)
+}
+
+// TestToolNetAsk_broadcastZeroResponses — spec §6.1: zero responses is NOT
+// an error. The model gets an empty bag with responded:0.
+func TestToolNetAsk_broadcastZeroResponses(t *testing.T) {
+	hub := broadcastHub(t, []proto.AgentCard{}) // empty project
+	defer hub.Close()
+
+	resp := netAskIPC(t, hub, `{"prompt":"hello?","timeout_ms":200}`)
+	if resp == nil {
+		t.Fatal("no response for ask-1")
+	}
+	if resp["kind"] != "tool_response" {
+		t.Errorf("kind = %v, want tool_response (empty bag is not an error)", resp["kind"])
+	}
+	details, _ := resp["details"].(map[string]any)
+	if details == nil {
+		t.Fatalf("missing details: %v", resp)
+	}
+	if v, _ := details["broadcast"].(bool); !v {
+		t.Errorf("details.broadcast = %v, want true", details["broadcast"])
+	}
+	if v, _ := details["responded"].(float64); v != 0 {
+		t.Errorf("details.responded = %v, want 0", details["responded"])
+	}
+	if v, _ := details["total_peers"].(float64); v != 0 {
+		t.Errorf("details.total_peers = %v, want 0", details["total_peers"])
+	}
+}
+
+// TestToolNetAsk_broadcastAllTimeout — 3 peers, none respond. responded:0,
+// timed_out:3, no_response has 3 entries.
+func TestToolNetAsk_broadcastAllTimeout(t *testing.T) {
+	peers := []proto.AgentCard{
+		{SessionID: "s1", Name: "alpha",   Project: "default", Status: proto.StatusOnline},
+		{SessionID: "s2", Name: "beta",    Project: "default", Status: proto.StatusOnline},
+		{SessionID: "s3", Name: "gamma",   Project: "default", Status: proto.StatusOnline},
+	}
+	hub := broadcastHub(t, peers)
+	defer hub.Close()
+
+	resp := netAskIPC(t, hub, `{"prompt":"hello?","timeout_ms":250}`)
+	if resp == nil {
+		t.Fatal("no response for ask-1")
+	}
+	if resp["kind"] != "tool_response" {
+		t.Errorf("kind = %v, want tool_response (timeout bag is not an error)", resp["kind"])
+	}
+	details, _ := resp["details"].(map[string]any)
+	if details == nil {
+		t.Fatalf("missing details: %v", resp)
+	}
+	if v, _ := details["total_peers"].(float64); v != 3 {
+		t.Errorf("details.total_peers = %v, want 3", details["total_peers"])
+	}
+	if v, _ := details["responded"].(float64); v != 0 {
+		t.Errorf("details.responded = %v, want 0", details["responded"])
+	}
+	if v, _ := details["timed_out"].(float64); v != 3 {
+		t.Errorf("details.timed_out = %v, want 3", details["timed_out"])
+	}
+	noResp, _ := details["no_response"].([]any)
+	if len(noResp) != 3 {
+		t.Errorf("no_response length = %d, want 3", len(noResp))
+	}
+}
+
 // TestBroadcastResponse_marshal — types in ask.go round-trip cleanly.
 func TestBroadcastResponse_marshal(t *testing.T) {
 	errStr := "boom"
