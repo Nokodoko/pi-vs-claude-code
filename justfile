@@ -1,4 +1,5 @@
 set dotenv-load := true
+set positional-arguments := true
 
 default:
     @just --list
@@ -149,7 +150,7 @@ coms-go-vet:
 # Coms: peer-to-peer, same machine messaging between Pi agents via coms-go shim
 # Pass any pi/extension flags through, e.g.: just local-coms --name dev --color "#72F1B8"
 local-coms *args:
-    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts {{args}}
+    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts "$@"
 
 # Start a local coms-net server via "coms-go serve" (binds 127.0.0.1, OS-claimed port)
 # Auto-kills any stale process holding the pinned port first.
@@ -166,20 +167,20 @@ coms-net-server-lan:
 # Pi with networked coms client via coms-go shim (auto-discovers local server.json)
 # Pass any flags through, e.g.: just coms --name dev --server-url http://… --auth-token …
 coms *args:
-    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts {{args}}
+    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts "$@"
 
 # coms-net with gpt-5.5 (extra args still pass through, e.g. --name dev)
 coms1 *args:
-    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --provider openai --model gpt-5.5 {{args}}
+    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --provider openai --model gpt-5.5 "$@"
 
 # coms-net with claude-opus-4-7
 coms2 *args:
-    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model claude-opus-4-7 {{args}}
+    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model claude-opus-4-7 "$@"
 
 # coms-net with deepseek/deepseek-v4-pro
 coms3 *args:
-    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model deepseek/deepseek-v4-pro {{args}}
+    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model deepseek/deepseek-v4-pro "$@"
 
 # coms-net with z-ai/glm-5.1
 coms4 *args:
-    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model z-ai/glm-5.1 {{args}}
+    pi -e extensions/coms-go/shim.ts -e extensions/minimal.ts -e extensions/theme-cycler.ts --model z-ai/glm-5.1 "$@"
