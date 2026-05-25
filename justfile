@@ -145,6 +145,24 @@ test-coms-go-integration:
 coms-go-vet:
     (cd extensions/coms-go && go vet ./...)
 
+# Regression gate (spec/coms_auto_await §11 T12): all tests pass AND shim.ts
+# stays ≤ 300 LOC AND internal/server/ is identical to upstream (no server
+# changes). Fails loudly on any violation.
+coms-go-regression:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "==> coms_auto_await regression gate"
+    (cd extensions/coms-go && go test ./...)
+    loc=$(wc -l < extensions/coms-go/shim.ts)
+    echo "shim.ts LOC = $loc (cap 300)"
+    if [ "$loc" -gt 300 ]; then
+        echo "FAIL: shim.ts is $loc LOC, exceeds 300 cap (spec §0)"; exit 1
+    fi
+    if [ -n "$(git diff --name-only 5dbea03..HEAD -- extensions/coms-go/internal/server/ 2>/dev/null)" ]; then
+        echo "FAIL: extensions/coms-go/internal/server/ has changes since spec baseline 5dbea03 (spec §2 non-goal)"; exit 1
+    fi
+    echo "PASS: tests green, shim.ts $loc/300 LOC, server untouched"
+
 # ------------------------ coms + coms-net (HTTP/SSE hub) ------------------------
 
 # Coms: peer-to-peer, same machine messaging between Pi agents via coms-go shim
