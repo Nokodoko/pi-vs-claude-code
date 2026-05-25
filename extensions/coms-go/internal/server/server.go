@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/pi-vs-cc/coms-go/internal/proto"
 	"github.com/pi-vs-cc/coms-go/internal/util"
@@ -259,7 +260,16 @@ func Run(args []string) error {
 	mux := http.NewServeMux()
 	registerRoutes(mux, st, cfg)
 
-	srv := &http.Server{Handler: mux}
+	// WriteTimeout is intentionally 0: SSE streams (/v1/stream) hold connections open
+	// indefinitely; per-request deadlines come via context cancellation. ReadHeaderTimeout
+	// guards against slowloris; IdleTimeout caps keep-alive connections.
+	srv := &http.Server{
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		WriteTimeout:      0,
+		IdleTimeout:       120 * time.Second,
+	}
 
 	// Unlink helper (idempotent).
 	var unlinked bool

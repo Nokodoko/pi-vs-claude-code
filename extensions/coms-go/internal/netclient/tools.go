@@ -382,10 +382,9 @@ func (c *Client) toolNetAwait(req ipc.Request, w *ipc.Writer) {
 			data, err := c.httpGet(pollCtx, url, authToken)
 			serverCh <- serverResult{data: data, err: err}
 		}()
-	} else {
-		// No server — never resolves via server path.
-		go func() { <-make(chan struct{}) }()
 	}
+	// No-server case: serverCh is a buffered channel that is never sent to.
+	// The select below will simply never take the serverCh arm, which is correct.
 
 	var sseReady <-chan struct{}
 	if hasPending {
