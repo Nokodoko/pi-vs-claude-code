@@ -610,13 +610,9 @@ func (c *Client) netAskUnicast(req ipc.Request, w *ipc.Writer, p netAskParams, t
 	}
 }
 
-// netAskBroadcast — broadcast path. Stub in T5; full implementation in T6
-// (internal/netclient/ask.go) which adds the BroadcastResponse types and the
-// fan-out goroutines.
+// netAskBroadcast delegates to the implementation in ask.go (T6).
 func (c *Client) netAskBroadcast(req ipc.Request, w *ipc.Writer, p netAskParams, timeoutMs int) {
-	_ = p
-	_ = timeoutMs
-	_ = w.RespondError(req.ID, "coms_net_ask: broadcast (no target) not yet implemented")
+	c.netAskBroadcastImpl(req, w, p, timeoutMs)
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
