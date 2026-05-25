@@ -181,6 +181,39 @@ export default function (pi: ExtensionAPI) {
 		netIpc   = makeIpc(netChild);
 	});
 
+	// T3: drain the netIpc inboundQueue at the start of every agent turn and
+	// inject a single delimited message listing every pending inbound prompt.
+	// FIFO order is preserved (oldest first). No-op when the queue is empty.
+	// See SPEC/coms_auto_await §5.3 / §5.4.
+	pi.on("before_agent_start", async (_event, _ctx) => {
+		const entries = netIpc?.drainInbound?.() ?? [];
+		if (entries.length === 0) return {};
+		const n = entries.length;
+		const numbered = entries
+			.map((inj, i) => `[${i + 1}/${n}] From ${inj.sender_name} (msg ${inj.msg_id}):\n${inj.body}`)
+			.join("\n\n");
+		const text =
+			`You have ${n} pending message${n === 1 ? "" : "s"}:\n\n` +
+			numbered +
+			`\n\nRespond to each via \`coms_net_respond\`. Your reply will be sent back automatically.`;
+		const senders = entries.map(e => e.sender_name).join(", ");
+		return {
+			message: {
+				customType: "coms_inbound",
+				content: [{ type: "text", text }],
+				display: `coms-net: ${n} inbound message${n === 1 ? "" : "s"} from ${senders}`,
+				details: {
+					entries: entries.map(e => ({
+						msg_id:         e.msg_id,
+						sender_name:    e.sender_name,
+						sender_session: e.sender_session,
+						hops:           e.hops,
+					})),
+				},
+			},
+		};
+	});
+
 	pi.on("agent_end", async (event, ctx) => {
 		const baseData = { cwd: ctx.cwd ?? process.cwd(), model: ctx.model?.id ?? "" };
 		// T1.5: plumb the last assistant text through the net lifecycle frame so
