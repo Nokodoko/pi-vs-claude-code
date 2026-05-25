@@ -167,6 +167,16 @@ func (c *Client) netAskBroadcastImpl(req ipc.Request, w *ipc.Writer, p netAskPar
 			c.mu.Lock()
 			c.pendingReplies[sendResp.MsgID] = pr
 			c.mu.Unlock()
+			// T7: per-peer ask_send audit (broadcast: true).
+			_ = c.audit.Append(map[string]any{
+				"event":          "ask_send",
+				"msg_id":         sendResp.MsgID,
+				"target":         peer.Name,
+				"target_session": sendResp.TargetSession,
+				"hops":           hops,
+				"broadcast":      true,
+				"ts":             util.NowIso(),
+			})
 			results[i] = fanOut{
 				agent:     peer.Name,
 				sessionID: peer.SessionID,

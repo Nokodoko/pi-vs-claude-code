@@ -576,8 +576,19 @@ func (c *Client) netAskUnicast(req ipc.Request, w *ipc.Writer, p netAskParams, t
 	c.pendingReplies[msgID] = pr
 	c.mu.Unlock()
 
-	// Note: ask_send audit event is added in T7. Intentionally absent here so
-	// the diffs for T5/T6/T7 stay surgical and aligned with §11 task table.
+	// T7: audit the ask_send event before blocking on the reply. Mirrors the
+	// existing prompt_out event but distinguishes the atomic ask flow from a
+	// plain coms_net_send. Log parsers that don't recognise ask_send fall
+	// through to their default branch (additive change, see spec §9).
+	_ = c.audit.Append(map[string]any{
+		"event":          "ask_send",
+		"msg_id":         msgID,
+		"target":         target,
+		"target_session": targetSession,
+		"hops":           hops,
+		"broadcast":      false,
+		"ts":             util.NowIso(),
+	})
 
 	// Block until reply arrives or timeout fires.
 	timer := time.NewTimer(time.Duration(timeoutMs) * time.Millisecond)
