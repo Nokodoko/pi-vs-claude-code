@@ -98,14 +98,16 @@ export default function (pi: ExtensionAPI) {
 	let localChild: ChildProcess | null = null;
 	let netChild:   ChildProcess | null = null;
 
-	// Forward a tool call to the given child; lazily captures ipc via thunk.
+	// invokeTool is the shared dispatch path used by both registerTool's execute
+	// and the slash-command wrappers below — same validation, audit, timeout.
+	const invokeTool = async (get: () => ReturnType<typeof makeIpc> | null, tool: string, params: object) => {
+		const ipc = get();
+		if (!ipc) throw new Error(`coms-go: child not started (binary missing or session_start failed)`);
+		const msg = await ipc.call(tool, params);
+		return { content: msg.content ?? [], details: msg.details };
+	};
 	const fwd = (get: () => ReturnType<typeof makeIpc> | null, tool: string) =>
-		async (_id: string, params: object) => {
-			const ipc = get();
-			if (!ipc) throw new Error(`coms-go: child not started (binary missing or session_start failed)`);
-			const msg = await ipc.call(tool, params);
-			return { content: msg.content ?? [], details: msg.details };
-		};
+		async (_id: string, params: object) => invokeTool(get, tool, params);
 
 	// ━━ Local tools (client-local) ━━
 	pi.registerTool({ name: "coms_list",  label: "Coms List",
@@ -163,6 +165,34 @@ export default function (pi: ExtensionAPI) {
 	const rng = () => crypto.randomBytes(4).toString("hex");
 	pi.registerCommand("coms",     { description: "Force-refresh the coms pool widget (--all / --project <name>)",     handler: async (args) => { localIpc?.send({ kind: "command", id: rng(), name: "coms",     args: args ?? "" }); } });
 	pi.registerCommand("coms-net", { description: "Force-refresh the coms-net pool widget (--all / --project <name>)", handler: async (args) => { netIpc?.send({ kind: "command", id: rng(), name: "coms-net", args: args ?? "" }); } });
+
+	// Positional wrappers around coms_net_ask / coms_ask. Dispatch via the same
+	// invokeTool path used by registerTool — shared validation, audit, timeout.
+	const flatText = (r: { content?: any[] }) =>
+		(r.content ?? []).filter((b: any) => b?.type === "text").map((b: any) => String(b?.text ?? "")).join("\n").trim() || "(no response text)";
+	const askCmd = (name: string, ipc: () => ReturnType<typeof makeIpc> | null, tool: string, requireTarget: boolean, desc: string) =>
+		pi.registerCommand(name, { description: desc, handler: async (args, ctx) => {
+			const raw = (args ?? "").trim();
+			let params: any;
+			if (requireTarget) {
+				const sp = raw.indexOf(" ");
+				if (sp < 0) { ctx.ui?.notify?.(`/${name}: usage: /${name} <peer> <prompt...>`, "error"); return; }
+				const target = raw.slice(0, sp).trim();
+				const prompt = raw.slice(sp + 1).trim();
+				if (!target || !prompt) { ctx.ui?.notify?.(`/${name}: missing peer or prompt`, "error"); return; }
+				params = { target, prompt };
+			} else {
+				if (!raw) { ctx.ui?.notify?.(`/${name}: empty prompt`, "error"); return; }
+				params = { prompt: raw };
+			}
+			try {
+				const r = await invokeTool(ipc, tool, params);
+				ctx.ui?.notify?.(requireTarget ? `${params.target}: ${flatText(r)}` : flatText(r), "info");
+			} catch (e: any) { ctx.ui?.notify?.(`/${name} failed: ${e?.message ?? String(e)}`, "error"); }
+		} });
+	askCmd("ask",       () => netIpc,   "coms_net_ask", true,  "Net wrapper: /ask <peer> <prompt...> — atomic send+await via coms_net_ask.");
+	askCmd("broadcast", () => netIpc,   "coms_net_ask", false, "Net wrapper: /broadcast <prompt...> — fan to all peers via coms_net_ask (no target).");
+	askCmd("ask-local", () => localIpc, "coms_ask",     true,  "Local-socket wrapper: /ask-local <peer> <prompt...> — coms_ask (no receiver auto-injection).");
 
 	// ━━ Lifecycle ━━
 	pi.on("session_start", async (_event, ctx) => {

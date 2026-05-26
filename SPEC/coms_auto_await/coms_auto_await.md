@@ -286,6 +286,18 @@ Type.Object({
 
 **Timeout parameter:** `timeout_ms` defaults to **30 000 ms** (30 s) for `coms_net_ask`, not the 1 800 000 ms (30 min) default of `coms_net_await`. The intent is interactive latency, not fire-and-forget durability. Callers needing longer waits must pass `timeout_ms` explicitly.
 
+### 4.3 User-facing slash commands
+
+In addition to the model-callable tools above, `shim.ts` registers positional slash-command wrappers so the human user can drive ask/broadcast without hand-rolling tool-call JSON. Commands dispatch through the same `invokeTool` path as the registered tools — same validation, audit, timeout semantics. See `extensions/coms-go/shim.ts` `askCmd(...)` registrations.
+
+| Command | Wraps | Behavior |
+|---------|-------|----------|
+| `/ask <peer> <prompt...>` | `coms_net_ask` | Unicast over coms-net; replies surface via `ctx.ui.notify`. |
+| `/broadcast <prompt...>` | `coms_net_ask` (no `target`) | Fans to all peers in project; returns the bag synthesis. |
+| `/ask-local <peer> <prompt...>` | `coms_ask` | Unix-socket transport; no receiver auto-injection (§5 asymmetry). |
+
+The pre-existing `/coms` and `/coms-net` widget-refresh commands are unchanged.
+
 ---
 
 ## 5. Receiver-Side Auto-Injection (Net Transport Only)
