@@ -15,7 +15,7 @@
 //   ← { kind:"tool_error",    id, message }
 //   ← { kind:"event",         name, data }
 
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { spawn, type ChildProcess } from "node:child_process";
 import * as path from "node:path";
@@ -41,7 +41,26 @@ type Pending = { resolve: (v: any) => void; reject: (e: Error) => void };
 // Per-IPC-child FIFO; drained atomically by the before_agent_start hook.
 type InboundEntry = { msg_id: string; sender_name: string; sender_session: string; body: string; hops: number };
 
-function makeIpc(child: ChildProcess) {
+// buildInboundInjection — shared coms_inbound custom-message builder used by
+// before_agent_start (per-turn drain) and the idle auto-turn path in makeIpc.
+// Returns null on empty entries so callers can no-op cleanly. See spec §5.3/§5.6.
+function buildInboundInjection(entries: InboundEntry[]) {
+	if (entries.length === 0) return null;
+	const n = entries.length;
+	const numbered = entries.map((inj, i) => `[${i + 1}/${n}] From ${inj.sender_name} (msg ${inj.msg_id}):\n${inj.body}`).join("\n\n");
+	const text = `You have ${n} pending message${n === 1 ? "" : "s"}:\n\n${numbered}\n\nAddress each pending message in your reply. Your full response will be returned to each sender automatically.`;
+	const senders = entries.map(e => e.sender_name).join(", ");
+	return {
+		customType: "coms_inbound",
+		content: [{ type: "text" as const, text }],
+		display: `coms-net: ${n} inbound message${n === 1 ? "" : "s"} from ${senders}`,
+		details: { entries: entries.map(e => ({ msg_id: e.msg_id, sender_name: e.sender_name, sender_session: e.sender_session, hops: e.hops })) },
+	};
+}
+
+// makeIpc — onInbound fires after each inbound_prompt is enqueued; used by the
+// owner to nudge an idle receiver via pi.sendMessage(..., {triggerTurn:true}).
+function makeIpc(child: ChildProcess, onInbound?: () => void) {
 	const pending = new Map<string, Pending>();
 	const inboundQueue: InboundEntry[] = []; // T2: FIFO per child (drained in T3)
 	const rl = readline.createInterface({ input: child.stdout!, crlfDelay: Infinity });
@@ -55,18 +74,16 @@ function makeIpc(child: ChildProcess) {
 			msg.kind === "tool_error" ? p.reject(new Error(msg.message ?? "ipc error")) : p.resolve(msg);
 			return;
 		}
-		// T2: handle unsolicited event frames from the Go child. Currently the
-		// only event is "inbound_prompt"; appended to a FIFO so multiple senders
-		// arriving within one agent_start window are all preserved (no last-wins).
+		// T2: FIFO-append unsolicited "inbound_prompt" events. OQ-3: onInbound
+		// nudges an idle receiver; safe no-op when mid-turn (before_agent_start drains).
 		if (msg.kind === "event" && msg.name === "inbound_prompt" && msg.data) {
 			const d = msg.data;
 			inboundQueue.push({
-				msg_id:         String(d.msg_id ?? ""),
-				sender_name:    String(d.sender_name ?? "unknown"),
-				sender_session: String(d.sender_session ?? ""),
-				body:           String(d.body ?? ""),
-				hops:           typeof d.hops === "number" ? d.hops : 0,
+				msg_id: String(d.msg_id ?? ""), sender_name: String(d.sender_name ?? "unknown"),
+				sender_session: String(d.sender_session ?? ""), body: String(d.body ?? ""),
+				hops: typeof d.hops === "number" ? d.hops : 0,
 			});
+			try { onInbound?.(); } catch { /* swallow — IPC read loop must stay alive */ }
 		}
 	});
 	const send = (line: object) => { try { child.stdin!.write(JSON.stringify(line) + "\n"); } catch { /* child dead */ } };
@@ -97,6 +114,8 @@ export default function (pi: ExtensionAPI) {
 	let netIpc:   ReturnType<typeof makeIpc> | null = null;
 	let localChild: ChildProcess | null = null;
 	let netChild:   ChildProcess | null = null;
+	// lastCtx — most-recent ExtensionContext; ctx.isIdle() lives on it (OQ-3).
+	let lastCtx: ExtensionContext | null = null;
 
 	// invokeTool is the shared dispatch path used by both registerTool's execute
 	// and the slash-command wrappers below — same validation, audit, timeout.
@@ -196,6 +215,7 @@ export default function (pi: ExtensionAPI) {
 
 	// ━━ Lifecycle ━━
 	pi.on("session_start", async (_event, ctx) => {
+		lastCtx = ctx;
 		const binary = resolveBinary();
 		if (!binary) {
 			const expected = path.join(PLUGIN_DIR, "bin", `coms-go-${goos}-${goarch}`);
@@ -218,43 +238,29 @@ export default function (pi: ExtensionAPI) {
 		localChild = spawn(binary, ["client-local"], { stdio: ["pipe", "pipe", "inherit"], env });
 		netChild   = spawn(binary, ["client-net"],   { stdio: ["pipe", "pipe", "inherit"], env });
 		localIpc = makeIpc(localChild);
-		netIpc   = makeIpc(netChild);
+		// OQ-3: netIpc's onInbound self-injects via pi.sendMessage(..,{triggerTurn:true})
+		// when idle so receivers don't wait for human focus; mid-turn it no-ops and
+		// before_agent_start drains on the next turn. triggerTurn avoids the
+		// visible-empty-user-message problem of pi.sendUserMessage("").
+		netIpc   = makeIpc(netChild, () => {
+			if (!lastCtx?.isIdle?.()) return;
+			const message = buildInboundInjection(netIpc?.drainInbound?.() ?? []);
+			if (message) pi.sendMessage(message, { triggerTurn: true });
+		});
 	});
 
-	// T3: drain the netIpc inboundQueue at the start of every agent turn and
-	// inject a single delimited message listing every pending inbound prompt.
-	// FIFO order is preserved (oldest first). No-op when the queue is empty.
-	// See SPEC/coms_auto_await §5.3 / §5.4.
-	pi.on("before_agent_start", async (_event, _ctx) => {
+	// T3: per-turn drain of netIpc inboundQueue; FIFO order. No-op when empty
+	// (also the steady state after the OQ-3 idle path self-injected). Spec §5.3/§5.4/§5.6.
+	pi.on("before_agent_start", async (_event, ctx) => {
+		lastCtx = ctx;
 		const entries = netIpc?.drainInbound?.() ?? [];
-		if (entries.length === 0) return {};
-		const n = entries.length;
-		const numbered = entries
-			.map((inj, i) => `[${i + 1}/${n}] From ${inj.sender_name} (msg ${inj.msg_id}):\n${inj.body}`)
-			.join("\n\n");
-		const text =
-			`You have ${n} pending message${n === 1 ? "" : "s"}:\n\n` +
-			numbered +
-			`\n\nAddress each pending message in your reply. Your full response will be returned to each sender automatically.`;
-		const senders = entries.map(e => e.sender_name).join(", ");
-		return {
-			message: {
-				customType: "coms_inbound",
-				content: [{ type: "text", text }],
-				display: `coms-net: ${n} inbound message${n === 1 ? "" : "s"} from ${senders}`,
-				details: {
-					entries: entries.map(e => ({
-						msg_id:         e.msg_id,
-						sender_name:    e.sender_name,
-						sender_session: e.sender_session,
-						hops:           e.hops,
-					})),
-				},
-			},
-		};
+		const message = buildInboundInjection(entries);
+		if (!message) return {};
+		return { message };
 	});
 
 	pi.on("agent_end", async (event, ctx) => {
+		lastCtx = ctx;
 		const baseData = { cwd: ctx.cwd ?? process.cwd(), model: ctx.model?.id ?? "" };
 		// T1.5: plumb the last assistant text through the net lifecycle frame so
 		// handleLifecycle (netclient/client.go) can call onAgentEnd and POST the

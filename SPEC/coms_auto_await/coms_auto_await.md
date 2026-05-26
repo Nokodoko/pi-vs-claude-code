@@ -402,6 +402,16 @@ The `msg_id` IS shown to the model in the numbered header so it can address each
 
 `session_start` fires once per pi session (shim.ts line 136). `before_agent_start` fires before each agent invocation (each time the model starts generating). Inbound prompts arrive asynchronously — potentially after session start — so `before_agent_start` is the correct hook. It is already used by other extensions for per-turn prompt injection (pi-pi.ts line 557, agent-chain.ts line 645, agent-team.ts line 631).
 
+### 5.6 Idle auto-turn (OQ-3 resolution)
+
+`before_agent_start` only fires when a turn actually starts; an inbound that lands while the receiver is sitting idle would otherwise wait for the human to type. To close that gap, the `inbound_prompt` handler inside `makeIpc` invokes a per-IPC `onInbound` callback after each enqueue. For the net child, that callback checks `lastCtx.isIdle()` and — when true — drains the FIFO and self-injects via:
+
+```typescript
+pi.sendMessage(message, { triggerTurn: true });
+```
+
+`pi.sendMessage` (ExtensionAPI; types.ts line 1178) with `triggerTurn:true` appends a `customType: "coms_inbound"` entry to the session and starts a new turn when the agent is not streaming. It is preferred over `pi.sendUserMessage("")` because the latter would render a visible empty user-prompt line in the REPL ("Always triggers a turn" — types.ts line 1184). The shared `buildInboundInjection(entries)` helper builds the same payload used by `before_agent_start`, so the two drain paths are byte-equivalent — whichever fires first wins and the other no-ops on an empty queue. `lastCtx` is captured on `session_start`, `before_agent_start`, and `agent_end`.
+
 ---
 
 ## 6. Broadcast Collect-With-Deadline
@@ -696,20 +706,7 @@ All Go tests use table-driven style with unicode checkmarks (Ardan Labs conventi
 
 **OQ-2 — RESOLVED (FIFO queue, drain-all-per-turn).** `inboundQueue` is now a FIFO array. On `before_agent_start`, all pending entries are spliced out and concatenated into one delimited injection. `onAgentEnd` posts `last_text` as the response to every unfulfilled `netInboundCtx` entry in insertion order. See Section 5.4 for the full disambiguation rule.
 
-**OQ-3 — RESOLVED.** The pi ExtensionAPI exposes `pi.sendUserMessage(content, options?)` (types.d.ts line 841-843; docstring: "Always triggers a turn"). When `shim.ts` receives an `"inbound_prompt"` event and B's pi session is idle, it can call:
-
-```typescript
-pi.sendUserMessage(
-  `[coms-net auto-prompt] Message from ${inj.sender_name} is pending. Reply normally.`,
-  { deliverAs: "followUp" }
-);
-```
-
-This programmatically starts a new agent turn without user input, eliminating the idle-session wait entirely. The `before_agent_start` hook then fires for that turn, injects the full directive (with the message body), and the existing flow proceeds.
-
-**Decision: include as an optional enhancement in T3, not a new task.** The base T3 implementation (hook registered, `pendingInjection` consumed) is correct and complete. `sendUserMessage` can be added as an opt-in call at the end of the `makeIpc` event handler: after storing `pendingInjection`, call `pi.sendUserMessage(...)` only if `ctx.isIdle()` is true. If the model is already mid-turn, the `before_agent_start` hook will fire naturally on the next turn.
-
-**Implementer note:** `pi` is the `ExtensionAPI` instance closed over by `shim.ts`; it is accessible in the `makeIpc` event handler via the closure. No new parameters needed. The `ctx` for `isIdle()` must be captured from the most recent lifecycle event context — store it as a module-scoped `lastCtx` variable updated on each event.
+**OQ-3 — RESOLVED (in §5.6).** Wired post-T11. The original sketch proposed `pi.sendUserMessage("...", { deliverAs: "followUp" })`, but `sendUserMessage` "Always triggers a turn" by appending a USER-role entry — an empty / placeholder body renders as a visible empty user prompt in the REPL, which is confusing UX. Final implementation uses `pi.sendMessage(buildInboundInjection(...), { triggerTurn: true })` instead: the same `customType: "coms_inbound"` payload that `before_agent_start` returns, pushed from the `makeIpc` inbound handler when `lastCtx.isIdle()` is true. No fake user line, identical directive text. See §5.6 for full mechanism; mid-turn the path is a no-op and `before_agent_start` drains on the next turn.
 
 **OQ-4 — Broadcast and auto-injection.** When `coms_net_ask` fans out to N peers, N separate `"inbound_prompt"` events are emitted to each peer's shim. Each peer's `before_agent_start` hook fires independently. This is correct for N distinct pi sessions. Confirm: is there any scenario where multiple peers share the same `shim.ts` process (e.g., a multi-agent pi session)? If yes, the `pendingInjection` variable needs to be keyed by `msg_id`, not a single scalar.
 
