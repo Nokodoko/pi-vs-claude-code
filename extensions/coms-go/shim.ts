@@ -205,7 +205,7 @@ export default function (pi: ExtensionAPI) {
 		const text =
 			`You have ${n} pending message${n === 1 ? "" : "s"}:\n\n` +
 			numbered +
-			`\n\nRespond to each via \`coms_net_respond\`. Your reply will be sent back automatically.`;
+			`\n\nAddress each pending message in your reply. Your full response will be returned to each sender automatically.`;
 		const senders = entries.map(e => e.sender_name).join(", ");
 		return {
 			message: {

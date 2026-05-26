@@ -335,7 +335,7 @@ pi.on("before_agent_start", async (_event, _ctx) => {
   const text =
     `You have ${n} pending message${n === 1 ? "" : "s"}:\n\n` +
     numbered +
-    `\n\nRespond to each via \`coms_net_respond\`. Your reply will be sent back automatically.`;
+    `\n\nAddress each pending message in your reply. Your full response will be returned to each sender automatically.`;
   return {
     message: {
       customType: "coms_inbound",
@@ -357,7 +357,7 @@ You have 1 pending message:
 [1/1] From <sender_name> (msg <msg_id>):
 <body>
 
-Respond to each via `coms_net_respond`. Your reply will be sent back automatically.
+Address each pending message in your reply. Your full response will be returned to each sender automatically.
 ```
 
 **Directive format (N>1 case — multiple senders):**
@@ -371,10 +371,10 @@ You have N pending messages:
 [2/N] From <sender_B> (msg <id_B>):
 <body_B>
 
-Respond to each via `coms_net_respond`. Your reply will be sent back automatically.
+Address each pending message in your reply. Your full response will be returned to each sender automatically.
 ```
 
-The `msg_id` IS shown to the model in the numbered header so it can address each sender individually via `coms_net_respond`. The injection explicitly instructs the model to respond to all N — the model's responsibility is to call `coms_net_respond` once per entry. The `onAgentEnd` path in netclient/client.go (line 856) is the fallback that submits responses for any `inboundQueue` entries not explicitly closed out. **This submission only fires if the `agent_end` IPC frame carries a non-empty `last_text` field (see T1.5). Without T1.5, `handleLifecycle` returns without calling `onAgentEnd` and replies are never posted.**
+The `msg_id` IS shown to the model in the numbered header so it can address each sender individually in its reply text. The injection explicitly instructs the model to address all N pending messages in a single response. The `onAgentEnd` path in netclient/client.go (line 856) is the canonical submission path — the model's `last_text` is posted as the reply for every unfulfilled `inboundQueue` entry (oldest-first; see §5.4 disambiguation rule). **This submission only fires if the `agent_end` IPC frame carries a non-empty `last_text` field (see T1.5). Without T1.5, `handleLifecycle` returns without calling `onAgentEnd` and replies are never posted.**
 
 ### 5.4 FIFO queue semantics and drain-all-per-turn rule
 
