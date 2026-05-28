@@ -489,6 +489,66 @@ This test must be documented in `SPEC/coms_auto_await/REVIEWS/interactive_invari
 
 ---
 
+## 8.1 Cross-Host Setup (Hub + Remote)
+
+The single-host happy path (one `coms-serve` + one or more `ca <name>` agents) needs no env-var setup; everything auto-discovers via `~/.pi/coms-net/server.json`. For cross-host (agents on different machines talking to one hub), the operator must pin a stable port and share the bearer token out-of-band.
+
+### Hub-side environment
+
+| Var | Required | Default | Notes |
+|-----|----------|---------|-------|
+| `PI_COMS_NET_HOST` | no | `127.0.0.1` | `coms-serve-lan` overrides to `0.0.0.0` automatically |
+| `PI_COMS_NET_PORT` | **yes for cross-host** | `0` (OS-assigned ephemeral) | Must be pinned so remotes have a stable URL to dial |
+| `PI_COMS_NET_AUTH_TOKEN` | **yes for LAN bind** | unset | `coms-serve-lan` refuses to bind a non-loopback host without this (cite `internal/server/server.go:177`) |
+| `PI_COMS_NET_PUBLIC_URL` | no | unset | Set when the hub is behind a reverse proxy or NAT — this URL is what `server.json` advertises to discovering clients |
+| `PI_COMS_NET_PROJECT` | no | `default` | Project namespace; remotes must match |
+
+On bind, the hub also writes `~/.pi/coms-net/projects/<project>/server.secret.json` (chmod 0600) containing the same bearer — used as a fallback by on-host clients that don't have the env var set.
+
+### Remote-side bearer resolution
+
+Per `internal/netclient/client.go:354-380`, the remote's bearer is sourced in this precedence order:
+
+1. `--auth-token <token>` pi flag (highest priority)
+2. `PI_COMS_NET_AUTH_TOKEN` env var
+3. `~/.pi/coms-net/projects/<project>/server.secret.json` (mode 0600 required; otherwise rejected)
+
+If all three are empty/missing, the netclient errors out: *"no auth token; set `PI_COMS_NET_AUTH_TOKEN` or ensure `server.secret.json` exists (mode 0600)"*.
+
+Token handling note: the bearer is never logged. `safeError()` (cite `internal/server/auth.go:33`, `internal/netclient/sse.go:163`) strips `Bearer …` from any user-visible error string; logs only mention the secret-file path.
+
+### Example zsh — hub side
+
+```zsh
+# Token + port live in the operator's dotfiles (port public, bearer in a
+# gitignored / secret-file convention). Do NOT commit the bearer to any
+# tracked dotfile or sync mechanism that crosses trust boundaries.
+export PI_COMS_NET_PORT=8901
+export PI_COMS_NET_AUTH_TOKEN="<shared-secret>"
+coms-serve-lan
+# Server now listens on 0.0.0.0:8901 with the given bearer.
+# `coms-where` prints the resolved server.json + secret-file mode.
+```
+
+### Example zsh — remote side
+
+```zsh
+export PI_COMS_NET_AUTH_TOKEN="<same-shared-secret>"
+coms-agent-remote http://<hub-ip>:8901 --name <agent> [--color cyan] [--project myapp]
+```
+
+### Out-of-band token share
+
+The bearer must match on every participating host. Move it via the operator's preferred secure channel (pass, 1Password, `scp` of the secret file, vault, etc). The dotfile that holds the bearer must not cross trust boundaries via git or any unencrypted sync.
+
+### Sanity checks
+
+- `coms-where` on the hub prints the resolved endpoint + the secret-file path (token value itself never printed).
+- `curl http://<hub-ip>:8901/health` returns 200 with no auth required (per `internal/server/routes.go:20`).
+- `curl http://<hub-ip>:8901/v1/agents` returns 401 without a bearer header; with `-H "Authorization: Bearer $PI_COMS_NET_AUTH_TOKEN"` returns 200 (per `internal/server/routes.go:29-31`).
+
+---
+
 ## 9. Backward Compatibility
 
 | Surface | Status | Notes |
